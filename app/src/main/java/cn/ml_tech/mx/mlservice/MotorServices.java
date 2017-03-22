@@ -51,6 +51,7 @@ public class MotorServices extends Service {
     private String user_id = "";
     private long userid;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private DetectionReport detectionReport;
 
     public MotorServices() {
         initMemberData();
@@ -497,10 +498,29 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<DetectionReport> queryDetectionReport() throws RemoteException {
+        public List<DetectionReport> queryDetectionReport(String detectionSn, String drugInfo, String factoryName, String detectionNumber, String detectionBatch, String startTime, String stopTime, int page) throws RemoteException {
             Log.d("zw", "queryDetectionReport");
             List<DetectionReport> detectionReports = new ArrayList<>();
-            detectionReports = DataSupport.findAll(DetectionReport.class);
+            detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and detectionNumber like ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber + "%", detectionBatch + "%").find(DetectionReport.class);
+//            Cursor c = null;
+//            c = DataSupport.findBySQL("select * from DetectionReport where drugName like ? and factoryName like ? and detectionSn like ? " +
+//                    "and detectionNumber like ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber + "%", detectionBatch + "%");
+//            while (c.moveToNext()) {
+//                DetectionReport detectionReport = new DetectionReport();
+//                detectionReport.setId(c.getLong(c.getColumnIndex("id")));
+//                detectionReport.setUser_id(c.getLong(c.getColumnIndex("user_id")));
+//                detectionReport.setDruginfo_id(c.getLong(c.getColumnIndex("druginfo_id")));
+//                detectionReport.setDetectionBatch(c.getString(c.getColumnIndex("detectionBatch")));
+//                detectionReport.setDetectionNumber(c.getString(c.getColumnIndex("detectionNumber")));
+//                detectionReport.setDetectionFirstCount(c.getInt(c.getColumnIndex("detectionFirstCount")));
+//                detectionReport.setDetectionCount(c.getInt(c.getColumnIndex("detectionCount")));
+//                detectionReport.setDetectionSecondCount(c.getInt(c.getColumnIndex("detectionSecondCount")));
+//                detectionReport.setFactoryName(c.getString(c.getColumnIndex("factoryName")));
+//                detectionReport.setDrugName(c.getString(c.getColumnIndex("drugName")));
+//                detectionReport.setUserName(c.getString(c.getColumnIndex("userName")));
+//
+//                detectionReports.add(detectionReport);
+//            }
             return detectionReports;
         }
 
@@ -514,7 +534,6 @@ public class MotorServices extends Service {
                 public void run() {
                     try {
                         Thread.sleep(500);
-
                         //模拟操作随机数被二整除为进瓶成功
                         log("sucess");
                         intent = new Intent();
@@ -583,15 +602,26 @@ public class MotorServices extends Service {
         public void startCheck(int drug_id, final int checkNum, int rotateNum, final String detectionNumber, String detectionBatch, final boolean isFirst, final String detectionSn) throws RemoteException {
             Log.d("zw", drug_id + "check " + checkNum + "rotateNum " + rotateNum + "detectionBatch " + detectionBatch + isFirst);
             if (detectionSn.equals("")) {
-                final DetectionReport detectionReport = new DetectionReport();
-                detectionReport.setDetectionSn(getDetectionSn());
-                detectionReport.setDetectionBatch(detectionBatch);
-                detectionReport.setDetectionNumber(detectionNumber);
-                detectionReport.setUser_id(userid);
-                detectionReport.setDate(new Date());
-                detectionReport.setDetectionCount(checkNum);
-                detectionReport.setDruginfo_id(drug_id);
+                if (isFirst) {
+                    detectionReport = new DetectionReport();
+                    detectionReport.setDetectionSn(getDetectionSn());
+                    detectionReport.setDetectionBatch(detectionBatch);
+                    detectionReport.setDetectionNumber(detectionNumber);
+                    detectionReport.setUser_id(userid);
+                    detectionReport.setUserName(user_id);
+                    detectionReport.setDate(new Date());
+                    detectionReport.setDetectionCount(checkNum);
+                    detectionReport.setDruginfo_id(drug_id);
+                    detectionReport.setDrugName(DataSupport.find(DrugInfo.class, drug_id).getName());
+                    detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, drug_id).getFactory_id()).getName());
+
+                } else {
+                    detectionReport = DataSupport.findLast(DetectionReport.class);
+                }
                 new Thread() {
+                    /**
+                     *
+                     */
                     @Override
                     public void run() {
                         super.run();
@@ -599,7 +629,13 @@ public class MotorServices extends Service {
                             try {
                                 Thread.sleep(1000);
                                 simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
-                                if ((i == 0) && (!detectionSn.equals(""))) {
+                                if (isFirst) {
+                                    detectionReport.setDetectionFirstCount(i + 1);
+                                } else {
+                                    detectionReport.setDetectionSecondCount(i + 1);
+                                }
+                                if ((i == 0) && (detectionSn.equals("")) && isFirst) {
+                                    Log.d("zw", "saveCheckDate");
                                     saveCheckDate();
                                 }
                             } catch (InterruptedException e) {
@@ -610,6 +646,7 @@ public class MotorServices extends Service {
                         }
                     }
                 }.start();
+
             } else {
                 List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
                 final DetectionReport detectionReport = detectionReports.get(0);
@@ -824,6 +861,13 @@ public class MotorServices extends Service {
 
             }
         }
+        if (!DataSupport.isExist(Factory.class)) {
+            Factory factory = new Factory();
+            factory.setAddress("asdfgh");
+            factory.setName("湖南药厂");
+
+            factory.save();
+        }
         if (!DataSupport.isExist(DevUuid.class)) {
             DevUuid devUuid = new DevUuid();
             devUuid.setUserAbbreviation("admin");
@@ -919,32 +963,31 @@ public class MotorServices extends Service {
         detectionDetail.setVideoMd5("sadasdqqw");
         detectionDetail.setValid(false);
         if (isFirst) {
-            detectionDetail.setDetIndex(i);
-            detectionReport.setDetectionFirstCount(i);
+            detectionDetail.setDetIndex(i + 1);
         } else {
-            detectionDetail.setRepIndex(i);
-            detectionReport.setDetectionSecondCount(i);
+            detectionDetail.setRepIndex(i + 1);
         }
         JSONObject jsonObject = new JSONObject();
         setNodeInfo(jsonObject, i);
         detectionDetail.setNodeInfo(jsonObject.toString());
-        if (isFirst) {
-            detectionReport.setDetectionFirstCount(i);
-        } else {
-            detectionReport.setDetectionSecondCount(i);
-        }
         detectionReport.save();
         detectionDetail.setDetectionreport_id(DataSupport.findLast(DetectionReport.class).getId());
-        Log.d("zw", DataSupport.findLast(DetectionReport.class).getId() + "id");
         detectionDetail.save();
+        Log.d("zw", DataSupport.findLast(DetectionReport.class).getId() + "id");
         if (intent == null) {
             intent = new Intent();
         }
         intent.setAction("com.checkfinsh");
         if ((checkNum - 1) == i) {
-            intent.putExtra("state", "finish");
+            if (isFirst) {
+                intent.putExtra("state", "finish");
+            } else {
+                intent.putExtra("state", "secondfinish");
+            }
+
         } else {
             intent.putExtra("state", "process");
+
         }
         sendBroadcast(intent);
     }
