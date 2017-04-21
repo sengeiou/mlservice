@@ -11,6 +11,7 @@ import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MotorServices extends Service {
@@ -23,6 +24,7 @@ public class MotorServices extends Service {
 
         return START_STICKY;
     }
+    public List<DrugControls> mDrugControls = new ArrayList<>();
     private final IMlService.Stub mBinder = new IMlService.Stub() {
         @Override
         public void addMotorControl(MotorControl mControl) throws RemoteException {
@@ -34,6 +36,29 @@ public class MotorServices extends Service {
             log(password);
             List<User> users = DataSupport.where("userName = ? and userPassword = ?", name, password).find(User.class);
             return !users.isEmpty();
+        }
+
+        @Override
+        public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId) throws RemoteException {
+            DrugInfo drugInfo = new DrugInfo();
+            drugInfo.setName(name);
+            drugInfo.setEnName(enName);
+            drugInfo.setPinYin(pinYin);
+            drugInfo.setContainterId(containterId);
+            drugInfo.setFactoryId(factoryId);
+            drugInfo.save();
+            log("add Drug info....");
+            return true;
+        }
+
+        @Override
+        public List<DrugControls> queryDrugControl() throws RemoteException {
+            List<DrugInfo> mDrugInfo = DataSupport.findAll(DrugInfo.class);
+            for (DrugInfo drugInfo:mDrugInfo) {
+                DrugControls drugControls = new DrugControls(drugInfo.getName(), drugInfo.getEnName(), drugInfo.getPinYin());
+                mDrugControls.add(drugControls);
+            }
+            return mDrugControls;
         }
     };
 
