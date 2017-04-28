@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Ado;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
@@ -20,19 +20,41 @@ import org.litepal.crud.DataSupport;
 
 public class Factory extends DataSupport {
     @Column(nullable = false, unique = true)
-    String name;
+    private int id;
+    @Column(nullable = false, unique = true)
+    private String name;
     @Column(nullable = false)
-    String address;
-    String phone;
-    String fax;
-    String mail;
-    String contactName;
-    String contactPhone;
-    String webSite;
+    private  String address;
+    private  String phone;
+    private String fax;
+    private String mail;
+    private String contactName;
+    private  String contactPhone;
+    private  String webSite;
     @Column(defaultValue = "NULL")
-    String province_code;
+    private  String province_code;
     @Column(defaultValue = "NULL")
-    String city_code;
+    private String city_code;
+    @Column(defaultValue = "NULL")
+    private  String area_code;
+    @Column(defaultValue = "false",nullable = false)
+    private  boolean deprecate;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public boolean isDeprecate() {
+        return deprecate;
+    }
+
+    public void setDeprecate(boolean deprecate) {
+        this.deprecate = deprecate;
+    }
 
     public String getName() {
         return name;
@@ -122,6 +144,5 @@ public class Factory extends DataSupport {
         this.area_code = area_code;
     }
 
-    @Column(defaultValue = "NULL")
-    String area_code;
+
 }

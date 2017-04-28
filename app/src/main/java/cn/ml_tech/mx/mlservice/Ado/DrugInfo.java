@@ -1,7 +1,10 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Ado;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * CREATE TABLE "druginfo" (
@@ -18,16 +21,71 @@ import org.litepal.crud.DataSupport;
  */
 
 public class DrugInfo extends DataSupport {
+    @Column(unique = true,nullable = false)
+    private String id;
     @Column(nullable = false)
-    String name;
+    private String name;
     @Column(nullable = false)
-    String enName;
+    private String enName;
     @Column(nullable = false)
-    String pinYin;
+    private String pinYin;
     @Column(nullable = false)
-    int containterId;
+    private int containterId;
     @Column(nullable = false)
-    int factoryId;
+    private int factoryId;
+    @Column(nullable = false)
+    private int createUserId;
+    @Column(nullable = false)
+    private boolean deprecate;
+    private   DrugContainer drugContainer;
+    private  Factory factory;
+    private   User user;
+    private List<DrugParam>drugParamList=new ArrayList<DrugParam>();
+
+    public boolean isDeprecate() {
+        return deprecate;
+    }
+
+    public List<DrugParam> getDrugParamList() {
+        return drugParamList;
+    }
+
+    public void setDrugParamList(List<DrugParam> drugParamList) {
+        this.drugParamList = drugParamList;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public boolean getDeprecate() {
+        return deprecate;
+    }
+
+    public void setDeprecate(boolean deprecate) {
+        this.deprecate = deprecate;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public int getCreateUserId() {
+        return createUserId;
+    }
+
+    public void setCreateUserId(int createUserId) {
+        this.createUserId = createUserId;
+    }
+
 
     public String getName() {
         return name;
@@ -85,6 +143,5 @@ public class DrugInfo extends DataSupport {
         this.factory = factory;
     }
 
-    DrugContainer drugContainer;
-    Factory factory;
+
 }

@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Ado;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
@@ -17,11 +17,29 @@ import org.litepal.crud.DataSupport;
 
 public class Tray extends DataSupport {
     @Column(unique = true, nullable = false)
+    private int id;
+    @Column(unique = true, nullable = false)
     private int displayId;
     @Column(unique = true, nullable = false)
     private String icId;
     @Column(nullable = false)
-    private float innerDiameter;
+    private double innerDiameter;
+    @Column(nullable = false)
+    private double externalDiameter;
+    @Column(nullable = false)
+    private double diameter;
+    @Column(nullable = false)
+    private String desc;
+    @Column(nullable = false,defaultValue = "false")
+    private boolean deprecate;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public int getDisplayId() {
         return displayId;
@@ -39,27 +57,27 @@ public class Tray extends DataSupport {
         this.icId = icId;
     }
 
-    public float getInnerDiameter() {
+    public double getInnerDiameter() {
         return innerDiameter;
     }
 
-    public void setInnerDiameter(float innerDiameter) {
+    public void setInnerDiameter(double innerDiameter) {
         this.innerDiameter = innerDiameter;
     }
 
-    public float getEternalDiameter() {
-        return eternalDiameter;
+    public double getExternalDiameter() {
+        return externalDiameter;
     }
 
-    public void setEternalDiameter(float eternalDiameter) {
-        this.eternalDiameter = eternalDiameter;
+    public void setExternalDiameter(double externalDiameter) {
+        this.externalDiameter = externalDiameter;
     }
 
-    public float getDiameter() {
+    public double getDiameter() {
         return diameter;
     }
 
-    public void setDiameter(float diameter) {
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
 
@@ -71,11 +89,11 @@ public class Tray extends DataSupport {
         this.desc = desc;
     }
 
-    @Column(nullable = false)
+    public boolean isDeprecate() {
+        return deprecate;
+    }
 
-    private float eternalDiameter;
-    @Column(nullable = false)
-    private float diameter;
-    @Column(nullable = false)
-    private String desc;
+    public void setDeprecate(boolean deprecate) {
+        this.deprecate = deprecate;
+    }
 }

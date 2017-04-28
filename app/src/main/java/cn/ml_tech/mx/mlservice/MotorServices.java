@@ -4,15 +4,16 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.provider.ContactsContract;
 import android.util.Log;
 
-import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cn.ml_tech.mx.mlservice.Ado.DrugInfo;
+import cn.ml_tech.mx.mlservice.Ado.User;
 
 public class MotorServices extends Service {
     private void log(String message) {

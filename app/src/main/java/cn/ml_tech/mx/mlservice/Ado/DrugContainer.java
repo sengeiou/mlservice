@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Ado;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
@@ -29,37 +29,47 @@ import org.litepal.crud.DataSupport;
 
 public class DrugContainer extends DataSupport {
     @Column(unique = true, nullable = false)
-    String name;
+    private String id;
+    @Column(unique = true, nullable = false)
+   private String name;
     @Column(nullable = false)
-    int type;
+    private int type;
     @Column(nullable = false)
-    int specification;
+    private  int specification;
     @Column(nullable = false)
-    float diameter;
+    private double diameter;
     @Column(nullable = false)
-    float height;
+    private  double height;
     @Column(nullable = false)
-    int trayID;
+    private int trayID;
     @Column(nullable = false)
-    float srcTime;
+    private double srcTime;
     @Column(nullable = false)
-    float stpTime;
+    private double stpTime;
     @Column(nullable = false)
-    float channelValue1;
+    private double channelValue1;
     @Column(nullable = false)
-    float channelValue2;
+    private double channelValue2;
     @Column(nullable = false)
-    float channelValue3;
+    private double channelValue3;
     @Column(nullable = false)
-    float channelValue4;
+    private double channelValue4;
     @Column(nullable = false)
-    float shadeParam;
+    private double shadeParam;
     @Column(nullable = false, defaultValue = "4500")
-    int rotateSpeed;
+    private int rotateSpeed;
     @Column(nullable = false)
-    float sendParam;
-    SpecificationType specificationType;
-    Tray tray;
+    private double sendParam;
+    private SpecificationType specificationType;
+   private Tray tray;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -85,19 +95,19 @@ public class DrugContainer extends DataSupport {
         this.specification = specification;
     }
 
-    public float getDiameter() {
+    public double getDiameter() {
         return diameter;
     }
 
-    public void setDiameter(float diameter) {
+    public void setDiameter(double diameter) {
         this.diameter = diameter;
     }
 
-    public float getHeight() {
+    public double getHeight() {
         return height;
     }
 
-    public void setHeight(float height) {
+    public void setHeight(double height) {
         this.height = height;
     }
 
@@ -109,59 +119,59 @@ public class DrugContainer extends DataSupport {
         this.trayID = trayID;
     }
 
-    public float getSrcTime() {
+    public double getSrcTime() {
         return srcTime;
     }
 
-    public void setSrcTime(float srcTime) {
+    public void setSrcTime(double srcTime) {
         this.srcTime = srcTime;
     }
 
-    public float getStpTime() {
+    public double getStpTime() {
         return stpTime;
     }
 
-    public void setStpTime(float stpTime) {
+    public void setStpTime(double stpTime) {
         this.stpTime = stpTime;
     }
 
-    public float getChannelValue1() {
+    public double getChannelValue1() {
         return channelValue1;
     }
 
-    public void setChannelValue1(float channelValue1) {
+    public void setChannelValue1(double channelValue1) {
         this.channelValue1 = channelValue1;
     }
 
-    public float getChannelValue2() {
+    public double getChannelValue2() {
         return channelValue2;
     }
 
-    public void setChannelValue2(float channelValue2) {
+    public void setChannelValue2(double channelValue2) {
         this.channelValue2 = channelValue2;
     }
 
-    public float getChannelValue3() {
+    public double getChannelValue3() {
         return channelValue3;
     }
 
-    public void setChannelValue3(float channelValue3) {
+    public void setChannelValue3(double channelValue3) {
         this.channelValue3 = channelValue3;
     }
 
-    public float getChannelValue4() {
+    public double getChannelValue4() {
         return channelValue4;
     }
 
-    public void setChannelValue4(float channelValue4) {
+    public void setChannelValue4(double channelValue4) {
         this.channelValue4 = channelValue4;
     }
 
-    public float getShadeParam() {
+    public double getShadeParam() {
         return shadeParam;
     }
 
-    public void setShadeParam(float shadeParam) {
+    public void setShadeParam(double shadeParam) {
         this.shadeParam = shadeParam;
     }
 
@@ -173,11 +183,11 @@ public class DrugContainer extends DataSupport {
         this.rotateSpeed = rotateSpeed;
     }
 
-    public float getSendParam() {
+    public double getSendParam() {
         return sendParam;
     }
 
-    public void setSendParam(float sendParam) {
+    public void setSendParam(double sendParam) {
         this.sendParam = sendParam;
     }
 

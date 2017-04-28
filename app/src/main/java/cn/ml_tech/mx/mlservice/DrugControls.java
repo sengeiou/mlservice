@@ -14,7 +14,6 @@ public   class DrugControls implements Parcelable {
     private String drugName;
     private String drugBottleType;
     private String drugFactory;
-
     public DrugControls(String name, String type, String factoryName) {
         drugName = name;
         drugBottleType = type;
