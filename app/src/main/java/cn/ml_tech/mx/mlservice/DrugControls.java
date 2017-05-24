@@ -29,7 +29,6 @@ public   class DrugControls implements Parcelable {
         public DrugControls createFromParcel(Parcel in) {
             return new DrugControls(in);
         }
-
         @Override
         public DrugControls[] newArray(int size) {
             return new DrugControls[size];
@@ -79,4 +78,83 @@ public   class DrugControls implements Parcelable {
     public void setDrugFactory(String drugFactory) {
         this.drugFactory = drugFactory;
     }
+
+    /**
+     * Created by ml on 2017/4/28.
+     */
+
+    public static class User implements Parcelable {
+        private int userLogicId;
+        private String userName;
+        private int userType;
+        private  boolean userEnable;
+
+        public int getUserLogicId() {
+            return userLogicId;
+        }
+
+        public void setUserLogicId(int userLogicId) {
+            this.userLogicId = userLogicId;
+        }
+
+        public String getUserName() {
+            return userName;
+        }
+
+        public void setUserName(String userName) {
+            this.userName = userName;
+        }
+
+        public int getUserType() {
+            return userType;
+        }
+
+        public void setUserType(int userType) {
+            this.userType = userType;
+        }
+
+        public boolean isUserEnable() {
+            return userEnable;
+        }
+
+        public void setUserEnable(boolean userEnable) {
+            this.userEnable = userEnable;
+        }
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            dest.writeInt(this.userLogicId);
+            dest.writeString(this.userName);
+            dest.writeInt(this.userType);
+            dest.writeByte(this.userEnable ? (byte) 1 : (byte) 0);
+        }
+
+        public User() {
+        }
+
+        protected User(Parcel in) {
+            this.userLogicId = in.readInt();
+            this.userName = in.readString();
+            this.userType = in.readInt();
+            this.userEnable = in.readByte() != 0;
+        }
+
+        public static final Creator<User> CREATOR = new Creator<User>() {
+            @Override
+            public User createFromParcel(Parcel source) {
+                return new User(source);
+            }
+
+            @Override
+            public User[] newArray(int size) {
+                return new User[size];
+            }
+        };
+    }
 }
+

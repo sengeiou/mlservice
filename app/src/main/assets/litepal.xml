@@ -1,13 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <litepal>
     <dbname value="AmiArm" />
-    <version value="2" />
+    <version value="1" />
     <list>
-        <mapping class="cn.ml_tech.mx.mlservice.User" />
-        <mapping class="cn.ml_tech.mx.mlservice.DrugContainer" />
-        <mapping class="cn.ml_tech.mx.mlservice.DrugInfo" />
-        <mapping class="cn.ml_tech.mx.mlservice.Factory" />
-        <mapping class="cn.ml_tech.mx.mlservice.SpecificationType" />
-        <mapping class="cn.ml_tech.mx.mlservice.Tray" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrail" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.CameraParams" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.ContainerType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DetectionDetail" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DetectionReport" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Dev_Addr_Def" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DevUuid" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugContainer" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugInfo" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugParam" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugStandard" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugStandardImgMod" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugStandardParam" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Factory" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Hat_Area" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Hat_City" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Hat_Province" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.LoginLog" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_Module" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_Operator" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_Source" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_SourceOperator" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_UserPermission" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.P_UserTypePermission" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.SpecificationType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.SystemConfig" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.Tray" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.User" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.UserType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.WorkFlow" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.SpecificationType" />
     </list>
 </litepal>
