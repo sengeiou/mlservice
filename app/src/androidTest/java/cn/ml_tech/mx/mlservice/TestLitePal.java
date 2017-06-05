@@ -1,18 +1,23 @@
 package cn.ml_tech.mx.mlservice;
 
 import android.content.Context;
+import android.graphics.Region;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextUtils;
+import android.util.Log;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.litepal.crud.ClusterQuery;
 import org.litepal.crud.DataSupport;
+import org.litepal.crud.callback.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.User;
 
@@ -36,33 +41,78 @@ public class TestLitePal  {
     @Test
     public void Test()
     {
-        //assertTrue(((int)7.68)<7);
-        assertTrue(((int)7.68)==7);
-        //assertTrue(((int)7.68)>7);
+        //region string to double
+        /*String str="";
+        double dd=0;
+        if(str!=null&&!TextUtils.equals(str,""))
+            dd=Double.valueOf(str);
+        System.out.println(dd);
+        dd=Double.parseDouble(str);*/
+        //endregion
+        double dd=99;
+        System.out.println(String.valueOf(dd));
+
+
     }
     @Test
     public  void FindUserAll()
     {
         List<User>userList=DataSupport.findAll(User.class);
-      userList= (List<User>) DataSupport
+        userList= (List<User>) DataSupport
                 .select("id","userid","username","usertype_id","userenable")
                 .where("isdeprecated=?","0")
                 .find(User.class);
-
-
         assertTrue(userList.size()>0);
     }
     @Test
+    public void GetDeviceParamList()
+    {
+        List<DevParam> list= DataSupport.select("paramName","paramValue")
+                .where("type=?","0")
+//                .where("paramName=?","pixTwoReg_sc")
+                .find(DevParam.class);
+        for (DevParam param:list
+             ) {
+            System.out.println(param.getParamName()+" "+String.valueOf(param.getParamValue()));
+        }
+        System.out.println(String.valueOf(list.size()));
+        assertTrue(list.size()>0);
+    }
+    @Test
+    public void SetDeviceParam()
+    {
+        List<DevParam>list=new ArrayList<DevParam>();
+        for(int var=0;var<10;var++)
+        {
+            DevParam param=new DevParam();
+            param.setParamName("param"+ String.valueOf(var+1));
+            param.setParamValue(var+1);
+            param.setType(0);
+            list.add(param);
+        }
+        System.out.println(list.size());
+
+        for ( DevParam param:list
+             ) {
+            //param.saveOrUpdate("paramName=?",param.getParamName());
+           param.saveOrUpdateAsync("paramName=?",param.getParamName());
+        }
+    // assertTrue(  devParam.save());
+
+    }
+
+
+    @Test
     public void FindTrayAll()
     {
-      List<Tray>trayList=  DataSupport.findAll(Tray.class);
+        List<Tray>trayList=  DataSupport.findAll(Tray.class);
 
         assertTrue(trayList.size()>0);
     }
     @Test
     public void FindTray()
     {
-      List<Tray>trayList=  DataSupport.select("displayId","icid")
+        List<Tray>trayList=  DataSupport.select("displayId","icid")
                 .where("displayId>?","8").find(Tray.class);
         assertTrue("find displayId>8 size more than 1 ",trayList.size()>0);
     }
@@ -98,8 +148,8 @@ public class TestLitePal  {
     public void  DeleteTrayById()
     {
         int id=1;
-       int rows= DataSupport.delete(Tray.class,id);
-                assertTrue(rows>=1);
+        int rows= DataSupport.delete(Tray.class,id);
+        assertTrue(rows>=1);
     }
     @Test
     public  void DeleteTrayAll()

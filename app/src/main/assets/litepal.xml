@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <litepal>
     <dbname value="AmiArm" />
-    <version value="1" />
+    <version value="2" />
     <list>
         <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrail" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType" />
@@ -12,6 +12,7 @@
         <mapping class="cn.ml_tech.mx.mlservice.DAO.DetectionReport" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.Dev_Addr_Def" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.DevUuid" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DevParam" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugContainer" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugInfo" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.DrugParam" />

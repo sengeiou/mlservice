@@ -8,6 +8,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import org.litepal.crud.DataSupport;
+import org.litepal.crud.callback.SaveCallback;
 import org.litepal.tablemanager.Connector;
 
 import java.text.SimpleDateFormat;
@@ -16,14 +17,40 @@ import java.util.Date;
 import java.util.List;
 import java.util.logging.SimpleFormatter;
 
+import cn.ml_tech.mx.mlservice.DAO.DevParam;
+import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.Bean.User;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 
+import static android.R.id.list;
+import static android.R.id.primary;
 import static android.content.ContentValues.TAG;
 
 
 public class MotorServices extends Service {
+    private List<DevParam>devParamList;
+
+    MotorServices()
+    {
+        initMemberData();
+        getDevParams();
+        Log.d(TAG, "MotorServices: "+String.valueOf(devParamList.size()));
+    }
+    private void initMemberData()
+    {
+        devParamList=new ArrayList<DevParam>();
+    }
+    public List<DevParam>getDevParams()
+    {
+        devParamList.clear();
+        devParamList=DataSupport.select("id","paramName","paramValue","type")
+                // .where("paramName=?",paramName)
+                // .where("type=?",String.valueOf(type))
+                .order(" id asc")
+                .find(DevParam.class);
+        return devParamList;
+    }
     private void log(String message) {
         Log.v("MotorServices", message);
     }
@@ -93,6 +120,50 @@ public class MotorServices extends Service {
 
             return list;
         }
+
+        @Override
+        public List<DevParam> getDeviceParamList(int type) throws RemoteException {
+            List<DevParam> list =new ArrayList<DevParam>();
+            for(DevParam param:devParamList)
+            {
+                if(type==param.getType())list.add(param);
+            }
+            return list;
+
+        }
+
+        @Override
+        public void setDeviceParamList(List<DevParam> list) throws RemoteException {
+            for (DevParam param:list
+                    ) {
+                param.saveOrUpdate("paramName=?",param.getParamName());
+            }
+            getDevParams();
+        }
+
+        @Override
+        public double getDeviceParams(String paramName,int type) throws RemoteException {
+            for(DevParam param:devParamList)
+            {
+                if(paramName.equals(param.getParamName())&&type==param.getType())
+                    return param.getParamValue();
+            }
+            return 0;
+        }
+
+        @Override
+        public DevUuid getDeviceManagerInfo() throws RemoteException {
+            DevUuid devUuid=new DevUuid();
+            devUuid=DataSupport.findFirst(DevUuid.class);
+            return devUuid;
+        }
+
+        @Override
+        public boolean setDeviceManagerInfo(DevUuid info) throws RemoteException {
+                boolean flag=true;
+               info.saveOrUpdate("id=?", String.valueOf(info.getId()));
+            return flag;
+        }
     };
 
     @Override
@@ -125,7 +196,6 @@ public class MotorServices extends Service {
             SimpleDateFormat simpleDateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
-
         }
 
         return mBinder;

@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -28,7 +31,7 @@ import org.litepal.crud.DataSupport;
  */
 
 
-public class DevParam extends DataSupport {
+public class DevParam extends DataSupport implements Parcelable {
     @Column(unique = true,nullable = false)
     private  long id;
     @Column( nullable = false)
@@ -69,4 +72,39 @@ public class DevParam extends DataSupport {
     public void setType(int type) {
         this.type = type;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeString(this.paramName);
+        dest.writeDouble(this.paramValue);
+        dest.writeInt(this.type);
+    }
+
+    public DevParam() {
+    }
+
+    protected DevParam(Parcel in) {
+        this.id = in.readLong();
+        this.paramName = in.readString();
+        this.paramValue = in.readDouble();
+        this.type = in.readInt();
+    }
+
+    public static final Parcelable.Creator<DevParam> CREATOR = new Parcelable.Creator<DevParam>() {
+        @Override
+        public DevParam createFromParcel(Parcel source) {
+            return new DevParam(source);
+        }
+
+        @Override
+        public DevParam[] newArray(int size) {
+            return new DevParam[size];
+        }
+    };
 }

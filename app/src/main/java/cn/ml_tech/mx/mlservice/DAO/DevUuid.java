@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -45,7 +48,7 @@ import java.util.Date;
 
 */
 
-public class DevUuid extends DataSupport {
+public class DevUuid extends DataSupport implements Parcelable {
     @Column(unique = true,nullable = false)
     private long id;
     @Column( nullable = false)
@@ -126,4 +129,49 @@ public class DevUuid extends DataSupport {
     public void setDevDateOfProduction(Date devDateOfProduction) {
         this.devDateOfProduction = devDateOfProduction;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeString(this.userAbbreviation);
+        dest.writeString(this.userName);
+        dest.writeString(this.devID);
+        dest.writeString(this.devModel);
+        dest.writeString(this.devName);
+        dest.writeString(this.devFactory);
+        dest.writeLong(this.devDateOfProduction != null ? this.devDateOfProduction.getTime() : -1);
+    }
+
+    public DevUuid() {
+
+    }
+
+    protected DevUuid(Parcel in) {
+        this.id = in.readLong();
+        this.userAbbreviation = in.readString();
+        this.userName = in.readString();
+        this.devID = in.readString();
+        this.devModel = in.readString();
+        this.devName = in.readString();
+        this.devFactory = in.readString();
+        long tmpDevDateOfProduction = in.readLong();
+        this.devDateOfProduction = tmpDevDateOfProduction == -1 ? null : new Date(tmpDevDateOfProduction);
+    }
+
+    public static final Parcelable.Creator<DevUuid> CREATOR = new Parcelable.Creator<DevUuid>() {
+        @Override
+        public DevUuid createFromParcel(Parcel source) {
+            return new DevUuid(source);
+        }
+
+        @Override
+        public DevUuid[] newArray(int size) {
+            return new DevUuid[size];
+        }
+    };
 }
