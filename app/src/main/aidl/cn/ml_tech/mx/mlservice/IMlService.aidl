@@ -7,6 +7,7 @@ import cn.ml_tech.mx.mlservice.Bean.User;
 import cn.ml_tech.mx.mlservice.Bean.UserType;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
+import cn.ml_tech.mx.mlservice.DAO.Tray;
 
 // Declare any non-default types here with import statements
 
@@ -26,5 +27,10 @@ interface IMlService {
     double getDeviceParams(in String paramName,in int type);
     DevUuid getDeviceManagerInfo();
     boolean setDeviceManagerInfo(in DevUuid info);
+    String getTrayIcId();
+    List<Tray> getTrayList();
+    Tray getTray(in int id);
+    boolean setTray(in Tray tray);
+
 
 }

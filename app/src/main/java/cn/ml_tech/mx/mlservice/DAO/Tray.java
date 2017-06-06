@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -31,7 +34,7 @@ CREATE TABLE [tray](
 
 */
 
-public class Tray extends DataSupport {
+public class Tray extends DataSupport implements Parcelable {
     @Column(unique = true, nullable = false)
     private long id;
     @Column(unique = true, nullable = false)
@@ -112,4 +115,47 @@ public class Tray extends DataSupport {
     public void setDeprecate(boolean deprecate) {
         this.deprecate = deprecate;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeInt(this.displayId);
+        dest.writeString(this.icId);
+        dest.writeDouble(this.innerDiameter);
+        dest.writeDouble(this.externalDiameter);
+        dest.writeDouble(this.diameter);
+        dest.writeString(this.mark);
+        dest.writeByte(this.deprecate ? (byte) 1 : (byte) 0);
+    }
+
+    public Tray() {
+    }
+
+    protected Tray(Parcel in) {
+        this.id = in.readLong();
+        this.displayId = in.readInt();
+        this.icId = in.readString();
+        this.innerDiameter = in.readDouble();
+        this.externalDiameter = in.readDouble();
+        this.diameter = in.readDouble();
+        this.mark = in.readString();
+        this.deprecate = in.readByte() != 0;
+    }
+
+    public static final Parcelable.Creator<Tray> CREATOR = new Parcelable.Creator<Tray>() {
+        @Override
+        public Tray createFromParcel(Parcel source) {
+            return new Tray(source);
+        }
+
+        @Override
+        public Tray[] newArray(int size) {
+            return new Tray[size];
+        }
+    };
 }

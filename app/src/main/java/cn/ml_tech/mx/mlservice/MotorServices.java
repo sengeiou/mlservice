@@ -15,12 +15,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.SimpleFormatter;
 
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.Bean.User;
+import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 
 import static android.R.id.list;
@@ -160,9 +162,33 @@ public class MotorServices extends Service {
 
         @Override
         public boolean setDeviceManagerInfo(DevUuid info) throws RemoteException {
-                boolean flag=true;
-               info.saveOrUpdate("id=?", String.valueOf(info.getId()));
+            boolean flag=true;
+            info.saveOrUpdate("id=?", String.valueOf(info.getId()));
             return flag;
+        }
+
+        @Override
+        public String getTrayIcId() throws RemoteException {
+            Random random = new Random();
+            String string = String.valueOf(Math.abs(random.nextInt()));
+            return string;
+        }
+
+        @Override
+        public List<Tray> getTrayList() throws RemoteException {
+            List<Tray>trayList=  DataSupport.findAll(Tray.class);
+            return trayList;
+        }
+
+        @Override
+        public Tray getTray(int id) throws RemoteException {
+           Tray tray= DataSupport.find(Tray.class,id);
+            return tray;
+        }
+        @Override
+        public boolean setTray(Tray tray) throws RemoteException {
+            tray.saveOrUpdate("icId=?",tray.getIcId());
+            return tray.isSaved();
         }
     };
 
