@@ -182,13 +182,21 @@ public class MotorServices extends Service {
 
         @Override
         public Tray getTray(int id) throws RemoteException {
-           Tray tray= DataSupport.find(Tray.class,id);
+            Tray tray= DataSupport.find(Tray.class,id);
             return tray;
         }
         @Override
         public boolean setTray(Tray tray) throws RemoteException {
-            tray.saveOrUpdate("icId=?",tray.getIcId());
+            tray.saveOrUpdate("displayId=?", String.valueOf(tray.getDisplayId()));
             return tray.isSaved();
+        }
+
+        @Override
+        public boolean delTray(Tray tray) throws RemoteException {
+            int r=0;
+            r=DataSupport.deleteAll(Tray.class,"displayId=? and icId=?", String.valueOf(tray.getDisplayId()),tray.getIcId());
+            if(r>0)return true;
+            else return false;
         }
     };
 
@@ -223,7 +231,6 @@ public class MotorServices extends Service {
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
         }
-
         return mBinder;
     }
 

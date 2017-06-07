@@ -31,6 +31,7 @@ interface IMlService {
     List<Tray> getTrayList();
     Tray getTray(in int id);
     boolean setTray(in Tray tray);
+    boolean delTray(in Tray tray);
 
 
 }
