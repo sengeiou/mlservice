@@ -8,6 +8,7 @@ import cn.ml_tech.mx.mlservice.Bean.UserType;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
+import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 
 // Declare any non-default types here with import statements
 
@@ -32,6 +33,8 @@ interface IMlService {
     Tray getTray(in int id);
     boolean setTray(in Tray tray);
     boolean delTray(in Tray tray);
+    int setSystemConfig(in List<SystemConfig>list);
+    List<SystemConfig>getSystemConfig();
 
 
 }

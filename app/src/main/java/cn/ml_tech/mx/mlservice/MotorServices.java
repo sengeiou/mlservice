@@ -8,6 +8,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import org.litepal.crud.DataSupport;
+import org.litepal.crud.callback.FindMultiCallback;
 import org.litepal.crud.callback.SaveCallback;
 import org.litepal.tablemanager.Connector;
 
@@ -22,6 +23,7 @@ import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.Bean.User;
+import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 
@@ -119,7 +121,6 @@ public class MotorServices extends Service {
             }
             Log.d(TAG, "getUserList: "+String.valueOf(listDao.size()));
             Log.d(TAG, "getUserList: "+String.valueOf(list.size()));
-
             return list;
         }
 
@@ -198,8 +199,23 @@ public class MotorServices extends Service {
             if(r>0)return true;
             else return false;
         }
-    };
 
+        @Override
+        public int setSystemConfig(List<SystemConfig> list) throws RemoteException {
+            int count=0;
+            for (SystemConfig config:list
+                 ) {
+               if(config.saveOrUpdate("paramName=?",config.getParamName()))count++;
+            }
+            return count;
+        }
+
+        @Override
+        public List<SystemConfig> getSystemConfig() throws RemoteException {
+            List<SystemConfig> listConfig= DataSupport.findAll(SystemConfig.class);
+            return listConfig;
+        }
+    };
     @Override
     public IBinder onBind(Intent intent) {
         log("Received binding.");
