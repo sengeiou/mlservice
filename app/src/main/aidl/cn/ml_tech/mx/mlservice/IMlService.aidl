@@ -9,6 +9,8 @@ import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
+import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
+
 
 // Declare any non-default types here with import statements
 
@@ -35,6 +37,6 @@ interface IMlService {
     boolean delTray(in Tray tray);
     int setSystemConfig(in List<SystemConfig>list);
     List<SystemConfig>getSystemConfig();
-
+    List<DetectionReport>getDetectionReportList(in int reportId);
 
 }

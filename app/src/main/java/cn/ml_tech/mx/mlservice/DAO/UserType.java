@@ -24,15 +24,16 @@ import org.litepal.crud.DataSupport;
 public class UserType extends DataSupport {
 
     @Column(nullable = false, unique = true)
-    private long id;
+    private long type_id;
     @Column(nullable = false, unique = true)
     private String name;
-    public long getId() {
-        return id;
+
+    public long getType_id() {
+        return type_id;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setType_id(long type_id) {
+        this.type_id = type_id;
     }
 
     public String getName() {

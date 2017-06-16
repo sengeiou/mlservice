@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -51,7 +54,7 @@ import java.util.List;
 
 */
 
-public class DetectionReport extends DataSupport {
+public class DetectionReport extends DataSupport implements Parcelable {
     @Column(unique = true,nullable = false)
     private  long id;
     @Column(nullable = false)
@@ -77,6 +80,9 @@ public class DetectionReport extends DataSupport {
     @Column( nullable = false,defaultValue = "false")
     private boolean ispdfdown;
     private List<DetectionDetail>listDetail=new ArrayList<DetectionDetail>();
+    protected String drugName;
+    protected String factoryName;
+    protected String userName;
 
     public long getId() {
         return id;
@@ -181,4 +187,89 @@ public class DetectionReport extends DataSupport {
     public void setListDetail(List<DetectionDetail> listDetail) {
         this.listDetail = listDetail;
     }
+
+    public String getDrugName() {
+        return drugName;
+    }
+
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
+    }
+
+    public String getFactoryName() {
+        return factoryName;
+    }
+
+    public void setFactoryName(String factoryName) {
+        this.factoryName = factoryName;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeLong(this.user_id);
+        dest.writeLong(this.druginfo_id);
+        dest.writeString(this.detectionSn);
+        dest.writeString(this.detectionNumber);
+        dest.writeString(this.detectionBatch);
+        dest.writeInt(this.detectionCount);
+        dest.writeInt(this.detectionFirstCount);
+        dest.writeInt(this.detectionSecondCount);
+        dest.writeLong(this.date != null ? this.date.getTime() : -1);
+        dest.writeByte(this.deprecate ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.ispdfdown ? (byte) 1 : (byte) 0);
+        dest.writeList(this.listDetail);
+        dest.writeString(this.drugName);
+        dest.writeString(this.factoryName);
+        dest.writeString(this.userName);
+    }
+
+    public DetectionReport() {
+    }
+
+    protected DetectionReport(Parcel in) {
+        this.id = in.readLong();
+        this.user_id = in.readLong();
+        this.druginfo_id = in.readLong();
+        this.detectionSn = in.readString();
+        this.detectionNumber = in.readString();
+        this.detectionBatch = in.readString();
+        this.detectionCount = in.readInt();
+        this.detectionFirstCount = in.readInt();
+        this.detectionSecondCount = in.readInt();
+        long tmpDate = in.readLong();
+        this.date = tmpDate == -1 ? null : new Date(tmpDate);
+        this.deprecate = in.readByte() != 0;
+        this.ispdfdown = in.readByte() != 0;
+        this.listDetail = new ArrayList<DetectionDetail>();
+        in.readList(this.listDetail, DetectionDetail.class.getClassLoader());
+        this.drugName = in.readString();
+        this.factoryName = in.readString();
+        this.userName = in.readString();
+    }
+
+    public static final Parcelable.Creator<DetectionReport> CREATOR = new Parcelable.Creator<DetectionReport>() {
+        @Override
+        public DetectionReport createFromParcel(Parcel source) {
+            return new DetectionReport(source);
+        }
+
+        @Override
+        public DetectionReport[] newArray(int size) {
+            return new DetectionReport[size];
+        }
+    };
 }

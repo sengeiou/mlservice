@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.SimpleFormatter;
 
+import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
@@ -215,6 +216,13 @@ public class MotorServices extends Service {
             List<SystemConfig> listConfig= DataSupport.findAll(SystemConfig.class);
             return listConfig;
         }
+
+        @Override
+        public List<DetectionReport> getDetectionReportList(int reportId) throws RemoteException {
+//            List<DetectionReport>list=DataSupport.findBySQL("");
+
+            return null;
+        }
     };
     @Override
     public IBinder onBind(Intent intent) {
@@ -223,15 +231,15 @@ public class MotorServices extends Service {
         if(!DataSupport.isExist(UserType.class))
         {
             UserType userType=new UserType();
-            userType.setId(0);
+            userType.setType_id(0);
             userType.setName("超级管理员");
             userType.save();
             userType.clearSavedState();
-            userType.setId(1);
+            userType.setType_id(1);
             userType.setName("管理员");
             userType.save();
             userType.clearSavedState();
-            userType.setId(2);
+            userType.setType_id(2);
             userType.setName("操作员");
             userType.save();
         }

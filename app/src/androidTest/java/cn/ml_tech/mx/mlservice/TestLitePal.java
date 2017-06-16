@@ -13,10 +13,14 @@ import org.litepal.crud.ClusterQuery;
 import org.litepal.crud.DataSupport;
 import org.litepal.crud.callback.SaveCallback;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import cn.ml_tech.mx.mlservice.Bean.UserType;
+import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.User;
@@ -158,4 +162,91 @@ public class TestLitePal  {
         DataSupport.deleteAllAsync(Tray.class,"displayId>? and id<?","5","7");
     }
 
+    @Test
+    public void AddDetectionReport() {
+//        @Column(nullable = false)
+//        private long user_id;
+//        @Column(nullable = false)
+//        private long druginfo_id;
+//        @Column(nullable = false)
+//        private String detectionSn;
+//        @Column( nullable = false)
+//        private String detectionNumber;
+//        @Column(nullable = false)
+//        private  String detectionBatch;
+//        @Column( nullable = false)
+//        private  int detectionCount;
+//        @Column(nullable = false)
+//        private  int detectionFirstCount;
+//        @Column( nullable = false)
+//        private  int detectionSecondCount;
+//        @Column(nullable = false)
+//        private  Date date;
+//        @Column( nullable = false,defaultValue = "false")
+//        private boolean deprecate;
+//        @Column( nullable = false,defaultValue = "false")
+//        private boolean ispdfdown;
+        List<DetectionReport> listReport = new ArrayList<DetectionReport>();
+        for (int i = 0; i < 100; i++) {
+            DetectionReport report = new DetectionReport();
+            report.setDetectionSn("Sn" + String.valueOf(i));
+            report.setDetectionBatch("Batch" + String.valueOf(i));
+            report.setDetectionNumber("Number" + String.valueOf(i));
+            report.setDruginfo_id(i);
+            report.setDetectionFirstCount(i);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            try {
+                report.setDate(dateFormat.parse("2016-07-02"));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+            report.setDetectionSecondCount(i);
+            report.setDetectionCount(i);
+            report.setUser_id(i);
+            listReport.add(report);
+        }
+        DataSupport.saveAll(listReport);
+        assertTrue(DataSupport.findAll(DetectionReport.class).size() > 0);
+    }
+
+    @Test
+    public void InitUserType() {
+        cn.ml_tech.mx.mlservice.DAO.UserType Type = new cn.ml_tech.mx.mlservice.DAO.UserType();
+
+        Type.setType_id(0);
+        Type.setName("超级管理员");
+        Type.save();
+        Type.clearSavedState();
+        Type.setType_id(1);
+        Type.setName("管理员");
+        Type.save();
+        Type.clearSavedState();
+        Type.setType_id(2);
+        Type.setName("操作员");
+        Type.save();
+        Type.clearSavedState();
+        assertTrue(DataSupport.findAll(cn.ml_tech.mx.mlservice.DAO.UserType.class).size() >= 3);
+
+    }
+
+    @Test
+    public void TestAsysncFun() {
+
+
+        DataSupport.deleteAll(cn.ml_tech.mx.mlservice.DAO.UserType.class);
+        List<cn.ml_tech.mx.mlservice.DAO.UserType> list = new ArrayList<cn.ml_tech.mx.mlservice.DAO.UserType>();
+        for (int i = 5; i < 10; i++) {
+            cn.ml_tech.mx.mlservice.DAO.UserType type = new cn.ml_tech.mx.mlservice.DAO.UserType();
+            type.setName(String.format("name%d", i));
+            type.setType_id(i);
+            list.add(type);
+        }
+        DataSupport.saveAllAsync(list).listen(new SaveCallback() {
+            @Override
+            public void onFinish(boolean success) {
+                assertTrue(false);
+                assertTrue(DataSupport.findAll(cn.ml_tech.mx.mlservice.DAO.UserType.class).size() > 0);
+            }
+        });
+    }
 }
