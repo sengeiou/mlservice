@@ -36,7 +36,7 @@ import static android.content.ContentValues.TAG;
 public class MotorServices extends Service {
     private List<DevParam>devParamList;
 
-    MotorServices()
+    public MotorServices()
     {
         initMemberData();
         getDevParams();
