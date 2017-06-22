@@ -1,21 +1,21 @@
-package cn.ml_tech.mx.mlservice.DAO;
+package cn.ml_tech.mx.mlservice;
 
-import org.litepal.annotation.Column;
-import org.litepal.crud.DataSupport;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * CREATE TABLE factory
- (
- id integer primary key AUTOINCREMENT not null,
- name text not null unique,
- address text not null,
- phone text,
- fax text,
- mail text
- contactName text
- contactPhone text,
- webSite text
- , province_code TEXT default NULL, city_code TEXT default NULL, area_code TEXT default NULL, contactName text, contactPhone text);
+ * (
+ * id integer primary key AUTOINCREMENT not null,
+ * name text not null unique,
+ * address text not null,
+ * phone text,
+ * fax text,
+ * mail text
+ * contactName text
+ * contactPhone text,
+ * webSite text
+ * , province_code TEXT default NULL, city_code TEXT default NULL, area_code TEXT default NULL, contactName text, contactPhone text);
  */
 /*
 *
@@ -40,28 +40,23 @@ CREATE TABLE [factory](
 
 */
 
-public class Factory extends DataSupport {
+public class FactoryControls implements Parcelable {
 
-    @Column(nullable = false, unique = true)
+
     private int id;
-    @Column(nullable = false, unique = true)
     private String name;
-    @Column(nullable = false)
-    private  String address;
-    private  String phone;
+    private String address;
+    private String phone;
     private String fax;
     private String mail;
     private String contactName;
-    private  String contactPhone;
-    private  String webSite;
-    @Column(defaultValue = "NULL")
-    private  String province_code;
-    @Column(defaultValue = "NULL")
+    private String contactPhone;
+    private String webSite;
+    private String province_code;
     private String city_code;
-    @Column(defaultValue = "NULL")
-    private  String area_code;
-    @Column(defaultValue = "false",nullable = false)
-    private  boolean deprecate;
+    private String area_code;
+    private boolean deprecate;
+
     public int getId() {
         return id;
     }
@@ -166,4 +161,56 @@ public class Factory extends DataSupport {
         this.area_code = area_code;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(this.id);
+        dest.writeString(this.name);
+        dest.writeString(this.address);
+        dest.writeString(this.phone);
+        dest.writeString(this.fax);
+        dest.writeString(this.mail);
+        dest.writeString(this.contactName);
+        dest.writeString(this.contactPhone);
+        dest.writeString(this.webSite);
+        dest.writeString(this.province_code);
+        dest.writeString(this.city_code);
+        dest.writeString(this.area_code);
+        dest.writeByte(this.deprecate ? (byte) 1 : (byte) 0);
+    }
+
+    public FactoryControls() {
+    }
+
+    protected FactoryControls(Parcel in) {
+        this.id = in.readInt();
+        this.name = in.readString();
+        this.address = in.readString();
+        this.phone = in.readString();
+        this.fax = in.readString();
+        this.mail = in.readString();
+        this.contactName = in.readString();
+        this.contactPhone = in.readString();
+        this.webSite = in.readString();
+        this.province_code = in.readString();
+        this.city_code = in.readString();
+        this.area_code = in.readString();
+        this.deprecate = in.readByte() != 0;
+    }
+
+    public static final Parcelable.Creator<FactoryControls> CREATOR = new Parcelable.Creator<FactoryControls>() {
+        @Override
+        public FactoryControls createFromParcel(Parcel source) {
+            return new FactoryControls(source);
+        }
+
+        @Override
+        public FactoryControls[] newArray(int size) {
+            return new FactoryControls[size];
+        }
+    };
 }

@@ -9,8 +9,7 @@ import java.util.Locale;
  * Created by mx on 2017/3/23.
  */
 
-public   class DrugControls implements Parcelable {
-
+public class DrugControls implements Parcelable {
     private String drugName;
     private String drugBottleType;
     private String drugFactory;
