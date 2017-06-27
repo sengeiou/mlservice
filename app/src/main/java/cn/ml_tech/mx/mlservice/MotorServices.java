@@ -30,6 +30,7 @@ import static android.content.ContentValues.TAG;
 
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
+    AlertDialog alertDialog;
 
     public MotorServices() {
         initMemberData();
@@ -75,8 +76,7 @@ public class MotorServices extends Service {
          */
         @Override
         public void saveBottlePara(BottlePara bottlepara) throws RemoteException {
-            Log.d("ZW", "图像采集延迟时间:" + bottlepara.getImageDelayTime());
-            //之后的代码有待完成
+             //之后的代码有待完成
         }
 
         @Override
@@ -282,6 +282,10 @@ public class MotorServices extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         log("Received binding.");
+        alertDialog = new AlertDialog();
+        alertDialog.setContext(this);
+        alertDialog.doCallBack();
+        log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
         if (!DataSupport.isExist(DrugInfo.class)) {
             DrugInfo drugInfo = new DrugInfo();
@@ -322,6 +326,7 @@ public class MotorServices extends Service {
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
         }
+        Log.d("ZW", "bind finish");
         return mBinder;
     }
 
