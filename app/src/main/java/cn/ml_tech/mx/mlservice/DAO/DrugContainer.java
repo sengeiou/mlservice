@@ -5,26 +5,26 @@ import org.litepal.crud.DataSupport;
 
 /**
  * CREATE TABLE drugContainer
- (
- id integer primary key AUTOINCREMENT   not null,
- name text not null unique,
- type  INTEGER not null,
- specification INTEGER not null,
- diameter REAL not null,
- height REAL,
- trayID INTEGER not null,
- srcTime REAL not null,
- stpTime REAL not null,
- channelValue1 REAL not null,
- channelValue2 REAL not null,
- channelValue3 REAL not null,
- channelValue4 REAL not null,
- shadeParam REAL not null,
- rotateSpeed INTEGER NOT NULL DEFAULT 4500,
- sendParam REAL not null,
- foreign key (specification) REFERENCES specificationType(id),
- foreign key (trayID) REFERENCES tray(id)
- );
+ * (
+ * id integer primary key AUTOINCREMENT   not null,
+ * name text not null unique,
+ * type  INTEGER not null,
+ * specification INTEGER not null,
+ * diameter REAL not null,
+ * height REAL,
+ * trayID INTEGER not null,
+ * srcTime REAL not null,
+ * stpTime REAL not null,
+ * channelValue1 REAL not null,
+ * channelValue2 REAL not null,
+ * channelValue3 REAL not null,
+ * channelValue4 REAL not null,
+ * shadeParam REAL not null,
+ * rotateSpeed INTEGER NOT NULL DEFAULT 4500,
+ * sendParam REAL not null,
+ * foreign key (specification) REFERENCES specificationType(id),
+ * foreign key (trayID) REFERENCES tray(id)
+ * );
  */
 /*
 *
@@ -55,7 +55,7 @@ public class DrugContainer extends DataSupport {
     @Column(unique = true, nullable = false)
     private long id;
     @Column(nullable = false)
-    private double channelvalue1;
+    private double channelvalue1;//通道阈值
     @Column(nullable = false)
     private double channelvalue2;
     @Column(nullable = false)
@@ -63,27 +63,26 @@ public class DrugContainer extends DataSupport {
     @Column(nullable = false)
     private double channelvalue4;
     @Column(nullable = false)
-    private double diameter;
-
-    private double height;
+    private double diameter;//直径
+    private double height;//高
     @Column(nullable = false)
-    private String name;
+    private String name;//名字
     @Column(nullable = false)
-    private int rotatespeed;
+    private int rotatespeed;//旋转速度
     @Column(nullable = false)
     private double sendparam;
     @Column(nullable = false)
-    private double shadeparam;
+    private double shadeparam;//遮光参数默认
     @Column(nullable = false)
-    private double srctime;
+    private double srctime;//最大旋瓶时间
     @Column(nullable = false)
-    private double stptime;
+    private double stptime;//最大停瓶时间
     @Column(nullable = false)
-    private long containertype_id;
+    private long containertype_id;//类型
     @Column(nullable = false)
-    private long specificationtype_id;
+    private long specificationtype_id;//规格id
     @Column(nullable = false)
-    private long tray_id;
+    private long tray_id;//托盘id
 
     public long getId() {
         return id;

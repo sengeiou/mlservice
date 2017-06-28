@@ -12,8 +12,9 @@ import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.BottlePara;
+import cn.ml_tech.mx.mlservice.SpecificationType;
+import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 // Declare any non-default types here with import statements
-
 interface IMlService {
     /**
      * Demonstrates some basic types that you can use as parameters
@@ -26,6 +27,7 @@ interface IMlService {
     List<DrugControls> queryDrugControl();
     List<FactoryControls> queryFactoryControl();
     List<User>getUserList();
+    List<SpecificationType>getSpecificationTypeList();
     void saveBottlePara(in BottlePara bottlepara);
    List<DevParam>getDeviceParamList(in int type);
    void setDeviceParamList(in List<DevParam>list);
@@ -40,5 +42,5 @@ interface IMlService {
     int setSystemConfig(in List<SystemConfig>list);
     List<SystemConfig>getSystemConfig();
     List<DetectionReport>getDetectionReportList(in int reportId);
-
+    List<CameraParams>getCameraParams();
 }
