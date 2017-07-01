@@ -166,8 +166,7 @@ public class MotorServices extends Service {
                 String drugBottleType = list.get(0).getName();
                 List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(mDrugInfo.get(i).getFactory_id())).find(Factory.class);
                 String factory_name = lists.get(0).getName();
-                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name, mDrugInfo.get(i).getPinyin()
-                        , mDrugInfo.get(i).getEnname());
+                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name);
                 mDrugControls.add(drugControls);
             }
             return mDrugControls;
@@ -313,10 +312,10 @@ public class MotorServices extends Service {
 
         @Override
         public List<CameraParams> getCameraParams() throws RemoteException {
-            List<CameraParams> listConfig = DataSupport.findAll(CameraParams.class);
-
-            return listConfig;
+            return null;
         }
+
+
     };
 
     @Override

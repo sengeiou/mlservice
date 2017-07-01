@@ -1,2 +1,2 @@
-import cn.ml_tech.mx.mlservice.DAO;
+package cn.ml_tech.mx.mlservice.DAO;
 parcelable CameraParams;
