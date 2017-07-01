@@ -14,6 +14,9 @@ import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.BottlePara;
 import cn.ml_tech.mx.mlservice.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.CameraParams;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
 // Declare any non-default types here with import statements
 interface IMlService {
     /**
@@ -24,7 +27,6 @@ interface IMlService {
     boolean checkAuthority(String name, String password);
     boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId);
     boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code);
-    void exportDrugData(in int id);
     List<DrugControls> queryDrugControl();
     List<FactoryControls> queryFactoryControl();
     List<User>getUserList();
@@ -41,7 +43,13 @@ interface IMlService {
     boolean setTray(in Tray tray);
     boolean delTray(in Tray tray);
     int setSystemConfig(in List<SystemConfig>list);
+    int setCameraParam(in CameraParams config);
     List<SystemConfig>getSystemConfig();
     List<DetectionReport>getDetectionReportList(in int reportId);
     List<CameraParams>getCameraParams();
+    List<AuditTrailInfoType>getAuditTrailInfoType();
+    List<AuditTrailEventType>getAuditTrailEventType();
+    List<AuditTrail>getAuditTrail(String starttime,String stoptime,String user,in int event_id,in int info_id);
+    List<DrugControls> queryDrugControlByInfo(String drugname,String pinyin,String enname);
+    void deleteDrugInfoById(in int id);
 }

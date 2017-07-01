@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -27,7 +30,8 @@ import org.litepal.crud.DataSupport;
  );
  */
 
-public class AuditTrailEventType extends DataSupport {
+public class AuditTrailEventType extends DataSupport implements Parcelable {
+
     @Column( unique = true,nullable = false)
     private long id;
     @Column(unique = true, nullable = false)
@@ -48,4 +52,35 @@ public class AuditTrailEventType extends DataSupport {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeString(this.name);
+    }
+
+    public AuditTrailEventType() {
+    }
+
+    protected AuditTrailEventType(Parcel in) {
+        this.id = in.readLong();
+        this.name = in.readString();
+    }
+
+    public static final Parcelable.Creator<AuditTrailEventType> CREATOR = new Parcelable.Creator<AuditTrailEventType>() {
+        @Override
+        public AuditTrailEventType createFromParcel(Parcel source) {
+            return new AuditTrailEventType(source);
+        }
+
+        @Override
+        public AuditTrailEventType[] newArray(int size) {
+            return new AuditTrailEventType[size];
+        }
+    };
 }

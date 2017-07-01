@@ -2,6 +2,7 @@ package cn.ml_tech.mx.mlservice;
 
 import android.app.Service;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
@@ -16,6 +17,9 @@ import java.util.List;
 import java.util.Random;
 
 import cn.ml_tech.mx.mlservice.Bean.User;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
+import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
 import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
@@ -26,6 +30,7 @@ import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
+import cn.ml_tech.mx.mlservice.Util.LogUtil;
 
 import static android.content.ContentValues.TAG;
 import static org.litepal.crud.DataSupport.where;
@@ -94,9 +99,9 @@ public class MotorServices extends Service {
         public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId) throws RemoteException {
             DrugInfo drugInfo = new DrugInfo();
             log(name + " " + enName + " " + pinYin + " containerid" + containterId + " factoryId" + factoryId);
-            drugInfo.setName(name);
-            drugInfo.setEnname(enName);
-            drugInfo.setPinyin(pinYin);
+            drugInfo.setName(name.trim());
+            drugInfo.setEnname(enName.trim());
+            drugInfo.setPinyin(pinYin.trim());
             drugInfo.setDrugcontainer_id(containterId);
             drugInfo.setFactory_id(factoryId);
             drugInfo.setCreatedate(new Date());
@@ -121,11 +126,6 @@ public class MotorServices extends Service {
             factory.setArea_code(area_code);
             factory.save();
             return true;
-        }
-
-        @Override
-        public void exportDrugData(int id) throws RemoteException {
-
         }
 
         @Override
@@ -166,7 +166,8 @@ public class MotorServices extends Service {
                 String drugBottleType = list.get(0).getName();
                 List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(mDrugInfo.get(i).getFactory_id())).find(Factory.class);
                 String factory_name = lists.get(0).getName();
-                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name);
+                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name, mDrugInfo.get(i).getPinyin()
+                        , mDrugInfo.get(i).getEnname(), mDrugInfo.get(i).getId());
                 mDrugControls.add(drugControls);
             }
             return mDrugControls;
@@ -298,6 +299,14 @@ public class MotorServices extends Service {
         }
 
         @Override
+        public int setCameraParam(CameraParams config) throws RemoteException {
+            int count = 0;
+            log(config.getParamName() + config.getParamValue());
+            if (config.saveOrUpdate("paramName=?", config.getParamName())) count++;
+            return count;
+        }
+
+        @Override
         public List<SystemConfig> getSystemConfig() throws RemoteException {
             List<SystemConfig> listConfig = DataSupport.findAll(SystemConfig.class);
             return listConfig;
@@ -312,9 +321,70 @@ public class MotorServices extends Service {
 
         @Override
         public List<CameraParams> getCameraParams() throws RemoteException {
-            return null;
+            List<CameraParams> listConfig = DataSupport.findAll(CameraParams.class);
+
+            return listConfig;
         }
 
+        @Override
+        public List<AuditTrailInfoType> getAuditTrailInfoType() throws RemoteException {
+            List<AuditTrailInfoType> eventTypes = new ArrayList<>();
+            eventTypes = DataSupport.findAll(AuditTrailInfoType.class);
+            return eventTypes;
+        }
+
+        @Override
+        public List<AuditTrailEventType> getAuditTrailEventType() throws RemoteException {
+            List<AuditTrailEventType> eventTypes = new ArrayList<>();
+            eventTypes = DataSupport.findAll(AuditTrailEventType.class);
+            return eventTypes;
+        }
+
+        @Override
+        public List<AuditTrail> getAuditTrail(String starttime, String stoptime, String user, int event_id, int info_id) throws RemoteException {
+            List<AuditTrail> auditTrails = new ArrayList<>();
+            auditTrails = DataSupport.findAll(AuditTrail.class);
+            log(auditTrails.size() + "auditr");
+            return auditTrails;
+        }
+
+        /**
+         * @param drugname    %
+         * @param pinyin
+         * @param enname
+         * @return
+         * @throws RemoteException
+         */
+        @Override
+        public List<DrugControls> queryDrugControlByInfo(String drugname, String pinyin, String enname) throws RemoteException {
+            mDrugControls.clear();
+            List<DrugInfo> drugInfos = new ArrayList<>();
+//            List<DrugInfo> drugInfos = DataSupport.where("name > ? ", drugname + "*").where("enname > ? ", enname + "*").where("pinyin > ? ", pinyin + "*").find(DrugInfo.class);
+            Cursor c = DataSupport.findBySQL("select * from druginfo where name > ? and enname > ? and pinyin > ?"
+                    , drugname + "*", enname + "*", pinyin + "*");
+            while (c.moveToNext()) {
+                drugInfos.add(new DrugInfo());
+            }
+            log(drugInfos.size() + "size");
+//            for (int i = 0; i < drugInfos.size(); i++) {
+//                log(drugInfos.get(i).toString());
+//                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(SpecificationType.class);
+//                String drugBottleType = list.get(0).getName();
+//                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfos.get(i).getFactory_id())).find(Factory.class);
+//                String factory_name = lists.get(0).getName();
+//                DrugControls drugControls = new DrugControls(drugInfos.get(i).getName(), drugBottleType, factory_name, drugInfos.get(i).getPinyin()
+//                        , drugInfos.get(i).getEnname());
+//                mDrugControls.add(drugControls);
+//            }
+            log("query" + mDrugControls.size());
+            return mDrugControls;
+        }
+
+        @Override
+        public void deleteDrugInfoById(int id) throws RemoteException {
+            log(id + "id");
+            DataSupport.delete(DrugInfo.class, id);
+        }
 
     };
 
@@ -387,7 +457,48 @@ public class MotorServices extends Service {
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
         }
-        Log.d("ZW", "bind finish");
+        //测试
+
+
+        if (LogUtil.isApkInDebug(this)) {
+            if (!DataSupport.isExist(CameraParams.class)) {
+                CameraParams cameraParams = new CameraParams();
+                cameraParams.setParamName("AGC");
+                cameraParams.setParamValue(1);
+                cameraParams.save();
+            }
+            if (!DataSupport.isExist(AuditTrailEventType.class)) {
+                AuditTrailEventType eventType = new AuditTrailEventType();
+                eventType.setName("add");
+                eventType.save();
+                eventType.clearSavedState();
+                eventType.setName("update");
+                eventType.save();
+                eventType.clearSavedState();
+                eventType.setName("delete");
+                eventType.save();
+                eventType.clearSavedState();
+                eventType.setName("select");
+                eventType.save();
+                eventType.clearSavedState();
+            }
+            if (!DataSupport.isExist(AuditTrail.class)) {
+                AuditTrail auditTrail = new AuditTrail();
+                auditTrail.setMark("testmark");
+                auditTrail.setValue("testvalue");
+                auditTrail.setTime("2016-06-29");
+                auditTrail.setEvent_id(1);
+                auditTrail.setInfo_id(1);
+                auditTrail.setUsername("testusername");
+                auditTrail.save();
+
+            }
+            if (!DataSupport.isExist(AuditTrailInfoType.class)) {
+                AuditTrailInfoType infoType = new AuditTrailInfoType();
+                infoType.setName("information");
+                infoType.save();
+            }
+        }
         return mBinder;
     }
 
