@@ -13,6 +13,7 @@ public class DrugControls implements Parcelable {
     private String drugName;
     private String drugBottleType;
     private String drugFactory;
+
     public DrugControls(String name, String type, String factoryName) {
         drugName = name;
         drugBottleType = type;
@@ -28,6 +29,7 @@ public class DrugControls implements Parcelable {
         public DrugControls createFromParcel(Parcel in) {
             return new DrugControls(in);
         }
+
         @Override
         public DrugControls[] newArray(int size) {
             return new DrugControls[size];
@@ -45,11 +47,13 @@ public class DrugControls implements Parcelable {
         dest.writeString(drugBottleType);
         dest.writeString(drugFactory);
     }
+
     public void readFromParcel(Parcel in) {
         drugName = in.readString();
         drugBottleType = in.readString();
         drugFactory = in.readString();
     }
+
     public String toString() {
         return String.format(Locale.ENGLISH, "DrugControl[ %s, %s, %s]", drugName, drugBottleType, drugFactory);
     }
@@ -86,7 +90,7 @@ public class DrugControls implements Parcelable {
         private int userLogicId;
         private String userName;
         private int userType;
-        private  boolean userEnable;
+        private boolean userEnable;
 
         public int getUserLogicId() {
             return userLogicId;

@@ -118,6 +118,11 @@ public class MotorServices extends Service {
         }
 
         @Override
+        public void exportDrugData(int id) throws RemoteException {
+
+        }
+
+        @Override
         public List<FactoryControls> queryFactoryControl() throws RemoteException {
             List<FactoryControls> factoryControlses = new ArrayList<>();
             List<Factory> factories = DataSupport.findAll(Factory.class);

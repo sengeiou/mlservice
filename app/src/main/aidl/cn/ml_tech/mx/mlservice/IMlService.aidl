@@ -23,6 +23,7 @@ interface IMlService {
     boolean checkAuthority(String name, String password);
     boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId);
     boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code);
+    void exportDrugData(in int id);
     List<DrugControls> queryDrugControl();
     List<FactoryControls> queryFactoryControl();
     List<User>getUserList();
