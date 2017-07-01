@@ -16,20 +16,24 @@ import java.util.List;
 import java.util.Random;
 
 import cn.ml_tech.mx.mlservice.Bean.User;
+import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
+import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 
 import static android.content.ContentValues.TAG;
+import static org.litepal.crud.DataSupport.where;
 
 
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
+    AlertDialog alertDialog;
 
     public MotorServices() {
         initMemberData();
@@ -75,7 +79,6 @@ public class MotorServices extends Service {
          */
         @Override
         public void saveBottlePara(BottlePara bottlepara) throws RemoteException {
-            Log.d("ZW", "图像采集延迟时间:" + bottlepara.getImageDelayTime());
             //之后的代码有待完成
         }
 
@@ -83,16 +86,19 @@ public class MotorServices extends Service {
         public boolean checkAuthority(String name, String password) throws RemoteException {
             log(name);
             log(password);
-            List<cn.ml_tech.mx.mlservice.Bean.User> users = DataSupport.where("userName = ? and userPassword = ?", name, password).find(cn.ml_tech.mx.mlservice.Bean.User.class);
+            List<cn.ml_tech.mx.mlservice.DAO.User> users = where("userName = ? and userPassword = ?", name, password).find(cn.ml_tech.mx.mlservice.DAO.User.class);
             return !users.isEmpty();
         }
 
         @Override
         public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId) throws RemoteException {
             DrugInfo drugInfo = new DrugInfo();
+            log(name + " " + enName + " " + pinYin + " containerid" + containterId + " factoryId" + factoryId);
             drugInfo.setName(name);
             drugInfo.setEnname(enName);
             drugInfo.setPinyin(pinYin);
+            drugInfo.setDrugcontainer_id(containterId);
+            drugInfo.setFactory_id(factoryId);
             drugInfo.setCreatedate(new Date());
             drugInfo.save();
             log("add Drug info....");
@@ -129,6 +135,7 @@ public class MotorServices extends Service {
             for (Factory factory : factories) {
                 Log.d("ZW", factory.getCity_code());
                 FactoryControls factoryControls = new FactoryControls();
+                factoryControls.setId(factory.getId());
                 factoryControls.setName(factory.getName());
                 factoryControls.setAddress(factory.getAddress());
                 factoryControls.setPhone(factory.getPhone());
@@ -144,16 +151,23 @@ public class MotorServices extends Service {
             return factoryControlses;
         }
 
+
+        /**
+         * @return
+         * @throws RemoteException
+         */
         @Override
         public List<DrugControls> queryDrugControl() throws RemoteException {
             mDrugControls.clear();
             List<DrugInfo> mDrugInfo = DataSupport.findAll(DrugInfo.class);
             for (int i = 0; i < mDrugInfo.size(); i++) {
-                Log.d("ZW", "num" + mDrugInfo.get(i).getId());
-
-                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), mDrugInfo.get(i).getEnname(), mDrugInfo.get(i).getPinyin());
-                Log.d("ZW", drugControls.getDrugName() + "yaopinleixing");
-
+                log(mDrugInfo.get(i).toString());
+                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(mDrugInfo.get(i).getDrugcontainer_id())).find(SpecificationType.class);
+                String drugBottleType = list.get(0).getName();
+                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(mDrugInfo.get(i).getFactory_id())).find(Factory.class);
+                String factory_name = lists.get(0).getName();
+                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name, mDrugInfo.get(i).getPinyin()
+                        , mDrugInfo.get(i).getEnname());
                 mDrugControls.add(drugControls);
             }
             return mDrugControls;
@@ -183,6 +197,20 @@ public class MotorServices extends Service {
             Log.d(TAG, "getUserList: " + String.valueOf(listDao.size()));
             Log.d(TAG, "getUserList: " + String.valueOf(list.size()));
             return list;
+        }
+
+        @Override
+        public List<cn.ml_tech.mx.mlservice.SpecificationType> getSpecificationTypeList() throws RemoteException {
+            List<cn.ml_tech.mx.mlservice.SpecificationType> typeList = new ArrayList<>();
+            Connector.getDatabase();
+            List<SpecificationType> types = DataSupport.findAll(SpecificationType.class);
+            for (SpecificationType type : types) {
+                cn.ml_tech.mx.mlservice.SpecificationType specificationType = new cn.ml_tech.mx.mlservice.SpecificationType();
+                specificationType.setId(type.getId());
+                specificationType.setName(type.getName());
+                typeList.add(specificationType);
+            }
+            return typeList;
         }
 
         @Override
@@ -282,25 +310,58 @@ public class MotorServices extends Service {
 
             return null;
         }
+
+        @Override
+        public List<CameraParams> getCameraParams() throws RemoteException {
+            List<CameraParams> listConfig = DataSupport.findAll(CameraParams.class);
+
+            return listConfig;
+        }
     };
 
     @Override
     public IBinder onBind(Intent intent) {
         log("Received binding.");
+        alertDialog = new AlertDialog();
+        alertDialog.setContext(this);
+        alertDialog.doCallBack();
+        log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
-        if (!DataSupport.isExist(DrugInfo.class)) {
-            DrugInfo drugInfo = new DrugInfo();
-            drugInfo.setName("aa");
-            drugInfo.setEnname("vb");
-            drugInfo.setPinyin("aaa");
-            drugInfo.setCreatedate(new Date());
-            drugInfo.save();
-            drugInfo.clearSavedState();
-            drugInfo.setName("aa");
-            drugInfo.setEnname("vb");
-            drugInfo.setPinyin("aaa");
-            drugInfo.setCreatedate(new Date());
-            drugInfo.save();
+        if (!DataSupport.isExist(SpecificationType.class)) {
+            SpecificationType specificationType = new SpecificationType();
+            specificationType.setName("西林瓶 1-2ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 2-3ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 6-10ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 10-12ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 15ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 20-25ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("西林瓶 30ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("安瓿瓶 1ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("安瓿瓶 2ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("安瓿瓶 5ml");
+            specificationType.save();
+            specificationType.clearSavedState();
+            specificationType.setName("安瓿瓶 10ml、西林瓶 5ml");
+            specificationType.save();
+
         }
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
@@ -327,6 +388,7 @@ public class MotorServices extends Service {
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
         }
+        Log.d("ZW", "bind finish");
         return mBinder;
     }
 

@@ -1,14 +1,9 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
-import android.icu.text.DateFormat;
-
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 /**
  * CREATE TABLE "druginfo" (
@@ -60,7 +55,6 @@ public class DrugInfo extends DataSupport {
     private long drugcontainer_id;
     @Column(nullable = false)
     private long factory_id;
-
     public long getId() {
         return id;
     }
@@ -131,5 +125,20 @@ public class DrugInfo extends DataSupport {
 
     public void setFactory_id(long factory_id) {
         this.factory_id = factory_id;
+    }
+
+    @Override
+    public String toString() {
+        return "DrugInfo{" +
+                "id=" + id +
+                ", createdate=" + createdate +
+                ", deprecate=" + deprecate +
+                ", enname='" + enname + '\'' +
+                ", name='" + name + '\'' +
+                ", pinyin='" + pinyin + '\'' +
+                ", user_id=" + user_id +
+                ", drugcontainer_id=" + drugcontainer_id +
+                ", factory_id=" + factory_id +
+                '}';
     }
 }

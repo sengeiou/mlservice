@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -27,7 +30,8 @@ import org.litepal.crud.DataSupport;
  );
  */
 
-public class CameraParams extends DataSupport {
+public class CameraParams extends DataSupport implements Parcelable {
+
     @Column(nullable = false,unique = true)
     private long id;
     @Column(unique = true,nullable = false)
@@ -58,4 +62,37 @@ public class CameraParams extends DataSupport {
     public void setParamValue(double paramValue) {
         ParamValue = paramValue;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeString(this.ParamName);
+        dest.writeDouble(this.ParamValue);
+    }
+
+    public CameraParams() {
+    }
+
+    protected CameraParams(Parcel in) {
+        this.id = in.readLong();
+        this.ParamName = in.readString();
+        this.ParamValue = in.readDouble();
+    }
+
+    public static final Parcelable.Creator<CameraParams> CREATOR = new Parcelable.Creator<CameraParams>() {
+        @Override
+        public CameraParams createFromParcel(Parcel source) {
+            return new CameraParams(source);
+        }
+
+        @Override
+        public CameraParams[] newArray(int size) {
+            return new CameraParams[size];
+        }
+    };
 }
