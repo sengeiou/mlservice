@@ -33,6 +33,7 @@ import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 
 import static android.content.ContentValues.TAG;
+import static org.litepal.crud.DataSupport.findAll;
 import static org.litepal.crud.DataSupport.where;
 
 
@@ -131,7 +132,7 @@ public class MotorServices extends Service {
         @Override
         public List<FactoryControls> queryFactoryControl() throws RemoteException {
             List<FactoryControls> factoryControlses = new ArrayList<>();
-            List<Factory> factories = DataSupport.findAll(Factory.class);
+            List<Factory> factories = findAll(Factory.class);
             for (Factory factory : factories) {
                 Log.d("ZW", factory.getCity_code());
                 FactoryControls factoryControls = new FactoryControls();
@@ -203,7 +204,7 @@ public class MotorServices extends Service {
         public List<cn.ml_tech.mx.mlservice.SpecificationType> getSpecificationTypeList() throws RemoteException {
             List<cn.ml_tech.mx.mlservice.SpecificationType> typeList = new ArrayList<>();
             Connector.getDatabase();
-            List<SpecificationType> types = DataSupport.findAll(SpecificationType.class);
+            List<SpecificationType> types = findAll(SpecificationType.class);
             for (SpecificationType type : types) {
                 cn.ml_tech.mx.mlservice.SpecificationType specificationType = new cn.ml_tech.mx.mlservice.SpecificationType();
                 specificationType.setId(type.getId());
@@ -264,7 +265,7 @@ public class MotorServices extends Service {
 
         @Override
         public List<Tray> getTrayList() throws RemoteException {
-            List<Tray> trayList = DataSupport.findAll(Tray.class);
+            List<Tray> trayList = findAll(Tray.class);
             return trayList;
         }
 
@@ -308,7 +309,7 @@ public class MotorServices extends Service {
 
         @Override
         public List<SystemConfig> getSystemConfig() throws RemoteException {
-            List<SystemConfig> listConfig = DataSupport.findAll(SystemConfig.class);
+            List<SystemConfig> listConfig = findAll(SystemConfig.class);
             return listConfig;
         }
 
@@ -321,7 +322,7 @@ public class MotorServices extends Service {
 
         @Override
         public List<CameraParams> getCameraParams() throws RemoteException {
-            List<CameraParams> listConfig = DataSupport.findAll(CameraParams.class);
+            List<CameraParams> listConfig = findAll(CameraParams.class);
 
             return listConfig;
         }
@@ -329,53 +330,60 @@ public class MotorServices extends Service {
         @Override
         public List<AuditTrailInfoType> getAuditTrailInfoType() throws RemoteException {
             List<AuditTrailInfoType> eventTypes = new ArrayList<>();
-            eventTypes = DataSupport.findAll(AuditTrailInfoType.class);
+            eventTypes = findAll(AuditTrailInfoType.class);
             return eventTypes;
         }
 
         @Override
         public List<AuditTrailEventType> getAuditTrailEventType() throws RemoteException {
             List<AuditTrailEventType> eventTypes = new ArrayList<>();
-            eventTypes = DataSupport.findAll(AuditTrailEventType.class);
+            eventTypes = findAll(AuditTrailEventType.class);
             return eventTypes;
         }
 
         @Override
         public List<AuditTrail> getAuditTrail(String starttime, String stoptime, String user, int event_id, int info_id) throws RemoteException {
             List<AuditTrail> auditTrails = new ArrayList<>();
-            auditTrails = DataSupport.findAll(AuditTrail.class);
+            auditTrails = findAll(AuditTrail.class);
             log(auditTrails.size() + "auditr");
             return auditTrails;
         }
 
-        /**
-         * @param drugname    %
-         * @param pinyin
-         * @param enname
-         * @return
-         * @throws RemoteException
-         */
         @Override
-        public List<DrugControls> queryDrugControlByInfo(String drugname, String pinyin, String enname) throws RemoteException {
+        public List<DrugControls> queryDrugControlByInfo(String drugname, String pinyin, String enname, int page) throws RemoteException {
             mDrugControls.clear();
             List<DrugInfo> drugInfos = new ArrayList<>();
-//            List<DrugInfo> drugInfos = DataSupport.where("name > ? ", drugname + "*").where("enname > ? ", enname + "*").where("pinyin > ? ", pinyin + "*").find(DrugInfo.class);
-            Cursor c = DataSupport.findBySQL("select * from druginfo where name > ? and enname > ? and pinyin > ?"
-                    , drugname + "*", enname + "*", pinyin + "*");
+            log("page" + page);
+            Cursor c = null;
+            c = DataSupport.findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ?"
+                    , drugname + "%", enname + "%", pinyin + "%");
+            if (page != -1) {
+                c = DataSupport.findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ? limit 20 offset " + (page - 1) * 20
+                        , drugname + "%", enname + "%", pinyin + "%");
+
+            }
+
             while (c.moveToNext()) {
-                drugInfos.add(new DrugInfo());
+                DrugInfo drugInfo = new DrugInfo();
+                drugInfo.setFactory_id(c.getLong(c.getColumnIndex("factory_id")));
+                drugInfo.setDrugcontainer_id(c.getLong(c.getColumnIndex("drugcontainer_id")));
+                drugInfo.setPinyin(c.getString(c.getColumnIndex("pinyin")));
+                drugInfo.setEnname(c.getString(c.getColumnIndex("enname")));
+                drugInfo.setName(c.getString(c.getColumnIndex("name")));
+                drugInfos.add(drugInfo);
+                log(drugInfo.toString());
             }
             log(drugInfos.size() + "size");
-//            for (int i = 0; i < drugInfos.size(); i++) {
-//                log(drugInfos.get(i).toString());
-//                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(SpecificationType.class);
-//                String drugBottleType = list.get(0).getName();
-//                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfos.get(i).getFactory_id())).find(Factory.class);
-//                String factory_name = lists.get(0).getName();
-//                DrugControls drugControls = new DrugControls(drugInfos.get(i).getName(), drugBottleType, factory_name, drugInfos.get(i).getPinyin()
-//                        , drugInfos.get(i).getEnname());
-//                mDrugControls.add(drugControls);
-//            }
+            for (int i = 0; i < drugInfos.size(); i++) {
+                log(drugInfos.get(i).toString());
+                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(SpecificationType.class);
+                String drugBottleType = list.get(0).getName();
+                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfos.get(i).getFactory_id())).find(Factory.class);
+                String factory_name = lists.get(0).getName();
+                DrugControls drugControls = new DrugControls(drugInfos.get(i).getName(), drugBottleType, factory_name, drugInfos.get(i).getPinyin()
+                        , drugInfos.get(i).getEnname(), drugInfos.get(i).getId());
+                mDrugControls.add(drugControls);
+            }
             log("query" + mDrugControls.size());
             return mDrugControls;
         }

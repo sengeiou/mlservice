@@ -50,6 +50,7 @@ interface IMlService {
     List<AuditTrailInfoType>getAuditTrailInfoType();
     List<AuditTrailEventType>getAuditTrailEventType();
     List<AuditTrail>getAuditTrail(String starttime,String stoptime,String user,in int event_id,in int info_id);
-    List<DrugControls> queryDrugControlByInfo(String drugname,String pinyin,String enname);
+    List<DrugControls> queryDrugControlByInfo(String drugname,String pinyin,String enname,in int page);
     void deleteDrugInfoById(in int id);
+
 }
