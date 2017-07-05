@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -36,7 +39,8 @@ CREATE TABLE [druginfo](
 
 */
 
-public class DrugInfo extends DataSupport {
+public class DrugInfo extends DataSupport implements Parcelable {
+
     @Column(unique = true, nullable = false)
     private long id;
     @Column(nullable = false)
@@ -141,4 +145,50 @@ public class DrugInfo extends DataSupport {
                 ", factory_id=" + factory_id +
                 '}';
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeLong(this.createdate != null ? this.createdate.getTime() : -1);
+        dest.writeByte(this.deprecate ? (byte) 1 : (byte) 0);
+        dest.writeString(this.enname);
+        dest.writeString(this.name);
+        dest.writeString(this.pinyin);
+        dest.writeLong(this.user_id);
+        dest.writeLong(this.drugcontainer_id);
+        dest.writeLong(this.factory_id);
+    }
+
+    public DrugInfo() {
+    }
+
+    protected DrugInfo(Parcel in) {
+        this.id = in.readLong();
+        long tmpCreatedate = in.readLong();
+        this.createdate = tmpCreatedate == -1 ? null : new Date(tmpCreatedate);
+        this.deprecate = in.readByte() != 0;
+        this.enname = in.readString();
+        this.name = in.readString();
+        this.pinyin = in.readString();
+        this.user_id = in.readLong();
+        this.drugcontainer_id = in.readLong();
+        this.factory_id = in.readLong();
+    }
+
+    public static final Parcelable.Creator<DrugInfo> CREATOR = new Parcelable.Creator<DrugInfo>() {
+        @Override
+        public DrugInfo createFromParcel(Parcel source) {
+            return new DrugInfo(source);
+        }
+
+        @Override
+        public DrugInfo[] newArray(int size) {
+            return new DrugInfo[size];
+        }
+    };
 }

@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -50,7 +53,7 @@ CREATE TABLE [drugcontainer](
 
 
 */
-public class DrugContainer extends DataSupport {
+public class DrugContainer extends DataSupport implements Parcelable {
 
     @Column(unique = true, nullable = false)
     private long id;
@@ -83,6 +86,27 @@ public class DrugContainer extends DataSupport {
     private long specificationtype_id;//规格id
     @Column(nullable = false)
     private long tray_id;//托盘id
+    @Column(nullable = false)
+    private double delaytime;//规格id
+
+    public double getDelaytime() {
+        return delaytime;
+    }
+
+    public void setDelaytime(double delaytime) {
+        this.delaytime = delaytime;
+    }
+
+    public double getImagetime() {
+        return imagetime;
+    }
+
+    public void setImagetime(double imagetime) {
+        this.imagetime = imagetime;
+    }
+
+    @Column(nullable = false)
+    private double imagetime;//托盘id
 
     public long getId() {
         return id;
@@ -211,4 +235,67 @@ public class DrugContainer extends DataSupport {
     public void setTray_id(long tray_id) {
         this.tray_id = tray_id;
     }
+
+    public DrugContainer() {
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeDouble(this.channelvalue1);
+        dest.writeDouble(this.channelvalue2);
+        dest.writeDouble(this.channelvalue3);
+        dest.writeDouble(this.channelvalue4);
+        dest.writeDouble(this.diameter);
+        dest.writeDouble(this.height);
+        dest.writeString(this.name);
+        dest.writeInt(this.rotatespeed);
+        dest.writeDouble(this.sendparam);
+        dest.writeDouble(this.shadeparam);
+        dest.writeDouble(this.srctime);
+        dest.writeDouble(this.stptime);
+        dest.writeLong(this.containertype_id);
+        dest.writeLong(this.specificationtype_id);
+        dest.writeLong(this.tray_id);
+        dest.writeDouble(this.delaytime);
+        dest.writeDouble(this.imagetime);
+    }
+
+    protected DrugContainer(Parcel in) {
+        this.id = in.readLong();
+        this.channelvalue1 = in.readDouble();
+        this.channelvalue2 = in.readDouble();
+        this.channelvalue3 = in.readDouble();
+        this.channelvalue4 = in.readDouble();
+        this.diameter = in.readDouble();
+        this.height = in.readDouble();
+        this.name = in.readString();
+        this.rotatespeed = in.readInt();
+        this.sendparam = in.readDouble();
+        this.shadeparam = in.readDouble();
+        this.srctime = in.readDouble();
+        this.stptime = in.readDouble();
+        this.containertype_id = in.readLong();
+        this.specificationtype_id = in.readLong();
+        this.tray_id = in.readLong();
+        this.delaytime = in.readDouble();
+        this.imagetime = in.readDouble();
+    }
+
+    public static final Creator<DrugContainer> CREATOR = new Creator<DrugContainer>() {
+        @Override
+        public DrugContainer createFromParcel(Parcel source) {
+            return new DrugContainer(source);
+        }
+
+        @Override
+        public DrugContainer[] newArray(int size) {
+            return new DrugContainer[size];
+        }
+    };
 }

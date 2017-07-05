@@ -24,7 +24,9 @@ import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
+import cn.ml_tech.mx.mlservice.DAO.DrugContainer;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
+import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
@@ -96,8 +98,18 @@ public class MotorServices extends Service {
             return !users.isEmpty();
         }
 
+        /**
+         * @param name
+         * @param enName
+         * @param pinYin
+         * @param containterId
+         * @param factoryId
+         * @param id
+         * @return
+         * @throws RemoteException
+         */
         @Override
-        public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId) throws RemoteException {
+        public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId, String id) throws RemoteException {
             DrugInfo drugInfo = new DrugInfo();
             log(name + " " + enName + " " + pinYin + " containerid" + containterId + " factoryId" + factoryId);
             drugInfo.setName(name.trim());
@@ -106,7 +118,12 @@ public class MotorServices extends Service {
             drugInfo.setDrugcontainer_id(containterId);
             drugInfo.setFactory_id(factoryId);
             drugInfo.setCreatedate(new Date());
-            drugInfo.save();
+            if (Integer.parseInt(id) == 0) {
+                drugInfo.save();
+            } else {
+                drugInfo.setId(Long.parseLong(id));
+                drugInfo.saveOrUpdate("id = ?", String.valueOf(drugInfo.getId()));
+            }
             log("add Drug info....");
             return true;
         }
@@ -161,9 +178,10 @@ public class MotorServices extends Service {
         public List<DrugControls> queryDrugControl() throws RemoteException {
             mDrugControls.clear();
             List<DrugInfo> mDrugInfo = DataSupport.findAll(DrugInfo.class);
+
             for (int i = 0; i < mDrugInfo.size(); i++) {
                 log(mDrugInfo.get(i).toString());
-                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(mDrugInfo.get(i).getDrugcontainer_id())).find(SpecificationType.class);
+                List<DrugContainer> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(mDrugInfo.get(i).getDrugcontainer_id())).find(DrugContainer.class);
                 String drugBottleType = list.get(0).getName();
                 List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(mDrugInfo.get(i).getFactory_id())).find(Factory.class);
                 String factory_name = lists.get(0).getName();
@@ -231,6 +249,24 @@ public class MotorServices extends Service {
                 param.saveOrUpdate("paramName=?", param.getParamName());
             }
             getDevParams();
+        }
+
+        /**
+         * @param list
+         * @throws RemoteException
+         */
+        @Override
+        public void setDrugParamList(List<DrugParam> list) throws RemoteException {
+            log("add drugParas");
+            for (DrugParam drugParam :
+                    list
+                    ) {
+                log(drugParam.toString());
+            }
+            for (DrugParam drugParam :
+                    list) {
+                drugParam.saveOrUpdate("druginfo_id = ? and paramname = ?", String.valueOf(drugParam.getDruginfo_id()), drugParam.getParamname());
+            }
         }
 
         @Override
@@ -394,6 +430,26 @@ public class MotorServices extends Service {
             DataSupport.delete(DrugInfo.class, id);
         }
 
+        @Override
+        public List<DrugContainer> getDrugContainer() throws RemoteException {
+            List<DrugContainer> drugContainers = new ArrayList<>();
+            drugContainers = DataSupport.findAll(DrugContainer.class);
+            return drugContainers;
+        }
+
+
+        @Override
+        public List<DrugParam> getDrugParamById(int id) throws RemoteException {
+            List<DrugParam> drugParams = new ArrayList<>();
+            drugParams = DataSupport.where("druginfo_id = ?", String.valueOf(id)).find(DrugParam.class);
+            for (DrugParam drugParam :
+                    drugParams
+                    ) {
+                log(drugParam.toString());
+            }
+            return drugParams;
+        }
+
     };
 
     @Override
@@ -404,42 +460,7 @@ public class MotorServices extends Service {
         alertDialog.doCallBack();
         log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
-        if (!DataSupport.isExist(SpecificationType.class)) {
-            SpecificationType specificationType = new SpecificationType();
-            specificationType.setName("西林瓶 1-2ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 2-3ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 6-10ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 10-12ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 15ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 20-25ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("西林瓶 30ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("安瓿瓶 1ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("安瓿瓶 2ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("安瓿瓶 5ml");
-            specificationType.save();
-            specificationType.clearSavedState();
-            specificationType.setName("安瓿瓶 10ml、西林瓶 5ml");
-            specificationType.save();
 
-        }
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
             userType.setType_id(0);
@@ -506,7 +527,53 @@ public class MotorServices extends Service {
                 infoType.setName("information");
                 infoType.save();
             }
+            if (!DataSupport.isExist(DrugContainer.class)) {
+                DrugContainer drugContainer = new DrugContainer();
+                drugContainer.setName("安瓿瓶1ml");
+                drugContainer.setDiameter(0);
+                drugContainer.setTray_id(8);
+                drugContainer.setSrctime(4.0);
+                drugContainer.setStptime(3.0);
+                drugContainer.setChannelvalue1(50);
+                drugContainer.setChannelvalue2(2.5);
+                drugContainer.setChannelvalue3(1.5);
+                drugContainer.setChannelvalue4(2.7);
+                drugContainer.setDelaytime(0.11);
+                drugContainer.setImagetime(0.01);
+                drugContainer.setShadeparam(22.0);
+                drugContainer.setRotatespeed(4500);
+                drugContainer.setSendparam(2.0);
+                drugContainer.save();
+                drugContainer.clearSavedState();
+                drugContainer.setName("安瓿瓶2ml");
+                drugContainer.setDiameter(0);
+                drugContainer.setTray_id(9);
+                drugContainer.setSrctime(5.0);
+                drugContainer.setStptime(3.0);
+                drugContainer.setChannelvalue1(50);
+                drugContainer.setChannelvalue2(2.5);
+                drugContainer.setChannelvalue3(1.5);
+                drugContainer.setChannelvalue4(2.7);
+                drugContainer.setShadeparam(18.0);
+                drugContainer.setRotatespeed(4500);
+                drugContainer.setSendparam(2.0);
+                drugContainer.setDelaytime(0.12);
+                drugContainer.setImagetime(0.01);
+                drugContainer.save();
+            }
+            if (!DataSupport.isExist(DrugInfo.class)) {
+                DrugInfo drugInfo = new DrugInfo();
+                drugInfo.setName("weiyi");
+                drugInfo.setPinyin("piniyni");
+                drugInfo.setEnname("enname");
+                drugInfo.setFactory_id(1);
+                drugInfo.setDrugcontainer_id(1);
+                drugInfo.save();
+
+            }
         }
+        //测试数据
+
         return mBinder;
     }
 

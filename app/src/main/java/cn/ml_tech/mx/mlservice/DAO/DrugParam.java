@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -30,7 +33,18 @@ CREATE TABLE [drugparam](
 
 */
 
-public class DrugParam extends DataSupport {
+public class DrugParam extends DataSupport implements Parcelable {
+    @Override
+    public String toString() {
+        return "DrugParam{" +
+                "id=" + id +
+                ", paramname='" + paramname + '\'' +
+                ", paramvalue=" + paramvalue +
+                ", type=" + type +
+                ", druginfo_id=" + druginfo_id +
+                '}';
+    }
+
     @Column(unique = true, nullable = false)
     private long id;
     @Column(nullable = false)
@@ -81,4 +95,41 @@ public class DrugParam extends DataSupport {
     public void setDruginfo_id(long druginfo_id) {
         this.druginfo_id = druginfo_id;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeString(this.paramname);
+        dest.writeDouble(this.paramvalue);
+        dest.writeInt(this.type);
+        dest.writeLong(this.druginfo_id);
+    }
+
+    public DrugParam() {
+    }
+
+    protected DrugParam(Parcel in) {
+        this.id = in.readLong();
+        this.paramname = in.readString();
+        this.paramvalue = in.readDouble();
+        this.type = in.readInt();
+        this.druginfo_id = in.readLong();
+    }
+
+    public static final Parcelable.Creator<DrugParam> CREATOR = new Parcelable.Creator<DrugParam>() {
+        @Override
+        public DrugParam createFromParcel(Parcel source) {
+            return new DrugParam(source);
+        }
+
+        @Override
+        public DrugParam[] newArray(int size) {
+            return new DrugParam[size];
+        }
+    };
 }
