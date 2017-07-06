@@ -58,5 +58,9 @@ interface IMlService {
     void deleteDrugInfoById(in int id);
     List<DrugContainer>getDrugContainer();
     List<DrugParam> getDrugParamById(in int id);
-
+    void Validate(in int drug_id,in int location);
+    void enterBottle();
+    void bottleTest(int num);
+    void leaveBottle();
+    void deleteDrugParamById(in int id);
 }

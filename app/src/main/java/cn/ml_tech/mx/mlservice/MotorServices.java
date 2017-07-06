@@ -42,6 +42,8 @@ import static org.litepal.crud.DataSupport.where;
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
     AlertDialog alertDialog;
+    private Random random;
+    private Intent intent;
 
     public MotorServices() {
         initMemberData();
@@ -406,13 +408,14 @@ public class MotorServices extends Service {
                 drugInfo.setPinyin(c.getString(c.getColumnIndex("pinyin")));
                 drugInfo.setEnname(c.getString(c.getColumnIndex("enname")));
                 drugInfo.setName(c.getString(c.getColumnIndex("name")));
+                drugInfo.setId(c.getLong(c.getColumnIndex("id")));
                 drugInfos.add(drugInfo);
                 log(drugInfo.toString());
             }
             log(drugInfos.size() + "size");
             for (int i = 0; i < drugInfos.size(); i++) {
                 log(drugInfos.get(i).toString());
-                List<SpecificationType> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(SpecificationType.class);
+                List<DrugContainer> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(DrugContainer.class);
                 String drugBottleType = list.get(0).getName();
                 List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfos.get(i).getFactory_id())).find(Factory.class);
                 String factory_name = lists.get(0).getName();
@@ -450,6 +453,105 @@ public class MotorServices extends Service {
             return drugParams;
         }
 
+        /**
+         * 遮光验证
+         * @param drug_id 药品id 为零表示新建药品
+         * @param location 遮光位置
+         * @throws RemoteException
+         */
+        @Override
+        public void Validate(int drug_id, int location) throws RemoteException {
+            log("Validate location" + location + " drug_id" + drug_id);
+            //调用底层jni 以下代码为模拟数据
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    try {
+                        Thread.sleep(500);
+
+                            //模拟操作随机数被二整除为遮光验证成功
+                            log("sucess");
+                            intent = new Intent();
+                            intent.setAction("com.enterbottle");
+                            intent.putExtra("state", "Validate");
+                            intent.putExtra("paratype", 2);//参数类型
+                            intent.putExtra("colornum", 20);//色差系数
+                            sendBroadcast(intent);
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }.start();
+        }
+
+        @Override
+        public void enterBottle() throws RemoteException {
+            //调用jni进瓶，以下代码为模拟操作
+            random = new Random();
+            log("enterBottle");
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(500);
+
+                            //模拟操作随机数被二整除为进瓶成功
+                            log("sucess");
+                            intent = new Intent();
+                            intent.setAction("com.enterbottle");
+                            intent.putExtra("state", "sucess");
+                            sendBroadcast(intent);
+
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
+        }
+
+        /**旋瓶测试
+         * @param num 每分钟转数
+         * @throws RemoteException
+         */
+        @Override
+        public void bottleTest(int num) throws RemoteException {
+            //jni层调用
+            log("每分钟转数" + num);
+        }
+
+        @Override
+        public void leaveBottle() throws RemoteException {
+            //jni层 出瓶
+            log("出瓶");
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                        //模拟操作随机数被二整除为进瓶成功
+                        log("sucess");
+                        intent = new Intent();
+                        intent.setAction("com.enterbottle");
+                        intent.putExtra("state", "leavebottlesucess");
+                        sendBroadcast(intent);
+
+                }
+            }.start();
+        }
+
+        @Override
+        public void deleteDrugParamById(int id) throws RemoteException {
+            DataSupport.deleteAllAsync(DrugParam.class, "druginfo_id = ? ", String.valueOf(id));
+        }
+
     };
 
     @Override
@@ -457,7 +559,6 @@ public class MotorServices extends Service {
         log("Received binding.");
         alertDialog = new AlertDialog();
         alertDialog.setContext(this);
-        alertDialog.doCallBack();
         log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
 
