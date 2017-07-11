@@ -7,6 +7,8 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
@@ -21,6 +23,7 @@ import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
 import cn.ml_tech.mx.mlservice.DAO.CameraParams;
+import cn.ml_tech.mx.mlservice.DAO.DetectionDetail;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
@@ -35,6 +38,7 @@ import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 
 import static android.content.ContentValues.TAG;
+import static org.litepal.crud.DataSupport.find;
 import static org.litepal.crud.DataSupport.findAll;
 import static org.litepal.crud.DataSupport.where;
 
@@ -44,6 +48,9 @@ public class MotorServices extends Service {
     AlertDialog alertDialog;
     private Random random;
     private Intent intent;
+    private String user_id = "";
+    private long userid;
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
     public MotorServices() {
         initMemberData();
@@ -97,6 +104,9 @@ public class MotorServices extends Service {
             log(name);
             log(password);
             List<cn.ml_tech.mx.mlservice.DAO.User> users = where("userName = ? and userPassword = ?", name, password).find(cn.ml_tech.mx.mlservice.DAO.User.class);
+            log(users.size() + "userssize");
+            user_id = users.get(0).getUserId();
+            userid = users.get(0).getId();
             return !users.isEmpty();
         }
 
@@ -309,7 +319,7 @@ public class MotorServices extends Service {
 
         @Override
         public Tray getTray(int id) throws RemoteException {
-            Tray tray = DataSupport.find(Tray.class, id);
+            Tray tray = find(Tray.class, id);
             return tray;
         }
 
@@ -469,15 +479,14 @@ public class MotorServices extends Service {
                     super.run();
                     try {
                         Thread.sleep(500);
-
-                            //模拟操作随机数被二整除为遮光验证成功
-                            log("sucess");
-                            intent = new Intent();
-                            intent.setAction("com.enterbottle");
-                            intent.putExtra("state", "Validate");
-                            intent.putExtra("paratype", 2);//参数类型
-                            intent.putExtra("colornum", 20);//色差系数
-                            sendBroadcast(intent);
+                        //模拟操作随机数被二整除为遮光验证成功
+                        log("sucess");
+                        intent = new Intent();
+                        intent.setAction("com.enterbottle");
+                        intent.putExtra("state", "Validate");
+                        intent.putExtra("paratype", 2);//参数类型
+                        intent.putExtra("colornum", 20);//色差系数
+                        sendBroadcast(intent);
 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -485,6 +494,14 @@ public class MotorServices extends Service {
 
                 }
             }.start();
+        }
+
+        @Override
+        public List<DetectionReport> queryDetectionReport() throws RemoteException {
+            Log.d("zw", "queryDetectionReport");
+            List<DetectionReport> detectionReports = new ArrayList<>();
+            detectionReports = DataSupport.findAll(DetectionReport.class);
+            return detectionReports;
         }
 
         @Override
@@ -498,12 +515,12 @@ public class MotorServices extends Service {
                     try {
                         Thread.sleep(500);
 
-                            //模拟操作随机数被二整除为进瓶成功
-                            log("sucess");
-                            intent = new Intent();
-                            intent.setAction("com.enterbottle");
-                            intent.putExtra("state", "sucess");
-                            sendBroadcast(intent);
+                        //模拟操作随机数被二整除为进瓶成功
+                        log("sucess");
+                        intent = new Intent();
+                        intent.setAction("com.enterbottle");
+                        intent.putExtra("state", "sucess");
+                        sendBroadcast(intent);
 
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -536,12 +553,12 @@ public class MotorServices extends Service {
                         e.printStackTrace();
                     }
 
-                        //模拟操作随机数被二整除为进瓶成功
-                        log("sucess");
-                        intent = new Intent();
-                        intent.setAction("com.enterbottle");
-                        intent.putExtra("state", "leavebottlesucess");
-                        sendBroadcast(intent);
+                    //模拟操作随机数被二整除为进瓶成功
+                    log("sucess");
+                    intent = new Intent();
+                    intent.setAction("com.enterbottle");
+                    intent.putExtra("state", "leavebottlesucess");
+                    sendBroadcast(intent);
 
                 }
             }.start();
@@ -551,6 +568,124 @@ public class MotorServices extends Service {
         public void deleteDrugParamById(int id) throws RemoteException {
             DataSupport.deleteAllAsync(DrugParam.class, "druginfo_id = ? ", String.valueOf(id));
         }
+
+        /**
+         * @param drug_id
+         * @param checkNum
+         * @param rotateNum
+         * @param detectionNumber
+         * @param detectionBatch
+         * @param isFirst
+         * @param detectionSn
+         * @throws RemoteException
+         */
+        @Override
+        public void startCheck(int drug_id, final int checkNum, int rotateNum, final String detectionNumber, String detectionBatch, final boolean isFirst, final String detectionSn) throws RemoteException {
+            Log.d("zw", drug_id + "check " + checkNum + "rotateNum " + rotateNum + "detectionBatch " + detectionBatch + isFirst);
+            if (detectionSn.equals("")) {
+                final DetectionReport detectionReport = new DetectionReport();
+                detectionReport.setDetectionSn(getDetectionSn());
+                detectionReport.setDetectionBatch(detectionBatch);
+                detectionReport.setDetectionNumber(detectionNumber);
+                detectionReport.setUser_id(userid);
+                detectionReport.setDate(new Date());
+                detectionReport.setDetectionCount(checkNum);
+                detectionReport.setDruginfo_id(drug_id);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        for (int i = 0; i < checkNum; i++) {
+                            try {
+                                Thread.sleep(1000);
+                                simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
+                                if ((i == 0) && (!detectionSn.equals(""))) {
+                                    saveCheckDate();
+                                }
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }.start();
+            } else {
+                List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
+                final DetectionReport detectionReport = detectionReports.get(0);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        try {
+                            Thread.sleep(500);
+                            if (detectionReport.getDetectionSecondCount() == 0) {
+                                for (int i = detectionReport.getDetectionFirstCount(); i < checkNum; i++) {
+                                    simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
+                                }
+                            } else {
+                                for (int i = detectionReport.getDetectionSecondCount(); i < checkNum; i++) {
+                                    simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
+                                }
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }.start();
+            }
+        }
+
+
+        @Override
+        public String getDetectionSn() throws RemoteException {
+            String result = "";
+            String uuid = getDevUuid();
+            String date = getDetectionSnDate();
+            result = uuid + date;
+            log(result);
+            return result;
+        }
+
+        @Override
+        public DetectionDetail getLastDetail() throws RemoteException {
+            return DataSupport.findLast(DetectionDetail.class);
+        }
+
+        /**
+         * @param id
+         * @return
+         * @throws RemoteException
+         */
+        @Override
+        public List<DetectionDetail> queryDetectionDetailByReportId(long id) throws RemoteException {
+            List<DetectionDetail> detectionDetails = new ArrayList<>();
+            detectionDetails = DataSupport.where("detectionreport_id = ?", id + "").find(DetectionDetail.class);
+            Log.d("zw", detectionDetails.size() + "size");
+            return detectionDetails;
+        }
+
+        @Override
+        public DetectionReport getLastReport() throws RemoteException {
+            DetectionReport detectionReport = null;
+            detectionReport = DataSupport.findLast(DetectionReport.class);
+            return detectionReport;
+        }
+
+        @Override
+        public DrugControls queryDrugControlsById(long id) throws RemoteException {
+            DrugInfo drugInfo = DataSupport.find(DrugInfo.class, id);
+            List<DrugContainer> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfo.getDrugcontainer_id())).find(DrugContainer.class);
+            String drugBottleType = list.get(0).getName();
+            List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfo.getFactory_id())).find(Factory.class);
+            String factory_name = lists.get(0).getName();
+            DrugControls drugControls = new DrugControls(drugInfo.getName(), drugBottleType, factory_name, drugInfo.getPinyin()
+                    , drugInfo.getEnname(), drugInfo.getId());
+            return drugControls;
+        }
+
 
     };
 
@@ -664,19 +799,205 @@ public class MotorServices extends Service {
             }
             if (!DataSupport.isExist(DrugInfo.class)) {
                 DrugInfo drugInfo = new DrugInfo();
-                drugInfo.setName("weiyi");
-                drugInfo.setPinyin("piniyni");
-                drugInfo.setEnname("enname");
-                drugInfo.setFactory_id(1);
-                drugInfo.setDrugcontainer_id(1);
-                drugInfo.save();
+                for (int i = 0; i < 73; i++) {
+                    drugInfo.setName("weiyi" + i);
+                    drugInfo.setPinyin("piniyni" + i);
+                    drugInfo.setEnname("enname" + i);
+                    drugInfo.setCreatedate(new Date());
+                    drugInfo.setFactory_id(1);
+                    drugInfo.setUser_id(1);
+                    drugInfo.setDrugcontainer_id(1);
+                    drugInfo.save();
+                    drugInfo.clearSavedState();
+                }
 
             }
+            if (!DataSupport.isExist(SystemConfig.class)) {
+                SystemConfig config = new SystemConfig();
+                config.setParamName("LastDetDate");
+                config.setParamValue("20170619");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("LastDetNum");
+                config.setParamValue("2");
+                config.save();
+
+            }
+        }
+        if (!DataSupport.isExist(DevUuid.class)) {
+            DevUuid devUuid = new DevUuid();
+            devUuid.setUserAbbreviation("admin");
+            devUuid.setUserName("admin");
+            devUuid.setDevID("YA2C1CY00R03002");
+            devUuid.setDevModel("ML-AMIXH-2.5");
+            devUuid.setDevName("光散射法全自动可见异物检测仪");
+            devUuid.setDevFactory("浙江猛凌机电科技有限公司");
+            devUuid.setDevDateOfProduction(new Date());
+            devUuid.save();
         }
         //测试数据
 
         return mBinder;
     }
 
+    public void saveCheckDate() {
+        List<SystemConfig> systemConfigs = DataSupport.where("paramName = ?", "LastDetDate").find(SystemConfig.class);
+        List<SystemConfig> lastDetNums = DataSupport.where("paramName = ?", "LastDetNum").find(SystemConfig.class);
+        SystemConfig lastDetNum = lastDetNums.get(0);
+        SystemConfig config = systemConfigs.get(0);
+        String currentTime = dateFormat.format(new Date());
+        int lastDate = Integer.parseInt(config.getParamValue());
+        int currentDate = Integer.parseInt(currentTime);
+        Log.d("zw", "lastdate" + lastDate + " currentDate" + currentDate + " ");
+        if (currentDate > lastDate) {
+            config.setParamValue(currentTime);
+            config.saveOrUpdate("paramName = ?", config.getParamName());
+            lastDetNum.setParamValue("1");
+            lastDetNum.saveOrUpdate("paramName = ?", lastDetNum.getParamName());
+        } else if (currentDate == lastDate) {
+            String res = lastDetNum.getParamValue();
+            int i = Integer.parseInt(res) + 1;
+            Log.d("zw", "res " + res + "resl" + i);
+            lastDetNum.setParamValue(String.valueOf(i));
+            lastDetNum.saveOrUpdate("paramName = ?", lastDetNum.getParamName());
 
+        }
+    }
+
+    public String getDevUuid() {
+        List<DevUuid> devUuid = DataSupport.findAll(DevUuid.class);
+        return devUuid.get(0).getUserAbbreviation();
+    }
+
+    public String getDetectionSnDate() {
+        String result = "";
+        List<SystemConfig> systemConfigs = DataSupport.where("paramName = ?", "LastDetDate").find(SystemConfig.class);
+        List<SystemConfig> lastDetNums = DataSupport.where("paramName = ?", "LastDetNum").find(SystemConfig.class);
+        SystemConfig lastDetNum = lastDetNums.get(0);
+        SystemConfig config = systemConfigs.get(0);
+        Log.d("zw", lastDetNum.getParamValue() + config.getParamValue());
+        String currentTime = dateFormat.format(new Date());
+        int lastDate = Integer.parseInt(config.getParamValue());
+        int currentDate = Integer.parseInt(currentTime);
+        if (currentDate > lastDate) {
+            result = currentTime + "001";
+        } else if (currentDate == lastDate) {
+            int current = Integer.parseInt(lastDetNum.getParamValue()) + 1;
+            if (current < 10) {
+                result = currentTime + "00" + current;
+            } else if (current > 10 && current < 100) {
+                result = currentTime + "0" + current;
+            } else {
+                result = currentTime + current;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 模拟检测到药品的数据
+     *
+     * @param i
+     * @param isFirst
+     * @param detectionDetails
+     * @param detectionReport
+     * @throws JSONException
+     */
+    public synchronized void simulatieDate(int i, int checkNum, boolean isFirst, DetectionReport detectionReport, String detectionSn) throws JSONException {
+        DetectionDetail detectionDetail = new DetectionDetail();
+        detectionDetail.setPositive(true);
+        detectionDetail.setColorFactor(150);
+        detectionDetail.setScrTime(4.0);
+        detectionDetail.setStpTime(3.0);
+        detectionDetail.setScrTimeText("正常");
+        detectionDetail.setStpTimeText("正常");
+        detectionDetail.setData1(0.1);
+        detectionDetail.setData2(0.3);
+        detectionDetail.setData3(0.3);
+        detectionDetail.setData4(0.3);
+        detectionDetail.setVideo("test.mp4");
+        detectionDetail.setVideoMd5("sadasdqqw");
+        detectionDetail.setValid(false);
+        if (isFirst) {
+            detectionDetail.setDetIndex(i);
+            detectionReport.setDetectionFirstCount(i);
+        } else {
+            detectionDetail.setRepIndex(i);
+            detectionReport.setDetectionSecondCount(i);
+        }
+        JSONObject jsonObject = new JSONObject();
+        setNodeInfo(jsonObject, i);
+        detectionDetail.setNodeInfo(jsonObject.toString());
+        if (isFirst) {
+            detectionReport.setDetectionFirstCount(i);
+        } else {
+            detectionReport.setDetectionSecondCount(i);
+        }
+        detectionReport.save();
+        detectionDetail.setDetectionreport_id(DataSupport.findLast(DetectionReport.class).getId());
+        Log.d("zw", DataSupport.findLast(DetectionReport.class).getId() + "id");
+        detectionDetail.save();
+        if (intent == null) {
+            intent = new Intent();
+        }
+        intent.setAction("com.checkfinsh");
+        if ((checkNum - 1) == i) {
+            intent.putExtra("state", "finish");
+        } else {
+            intent.putExtra("state", "process");
+        }
+        sendBroadcast(intent);
+    }
+
+    private void setNodeInfo(JSONObject jsonObject, int i) {
+        JSONObject floatdata = new JSONObject();
+        JSONObject glassprecent = new JSONObject();
+        JSONObject glasstime = new JSONObject();
+        JSONObject max = new JSONObject();
+        JSONObject min = new JSONObject();
+        JSONObject supers = new JSONObject();
+        JSONObject statistics40 = new JSONObject();
+        JSONObject statistics50 = new JSONObject();
+        JSONObject statistics60 = new JSONObject();
+        JSONObject statistics70 = new JSONObject();
+        try {
+            floatdata.put("name", "漂浮物检出次数(次)");
+            floatdata.put("data", i);
+            floatdata.put("result", "阴性");
+            glassprecent.put("name", "速降物检出率(%)");
+            glassprecent.put("data", 0);
+            glassprecent.put("result", "阴性");
+            glasstime.put("name", "速降物时间比例(%)");
+            glasstime.put("data", 1.62);
+            max.put("name", "50-70um异物检出数(颗)");
+            max.put("data", 2);
+            min.put("name", "40-50um异物检出数(颗)");
+            min.put("data", 3);
+            min.put("result", "阴性");
+            supers.put("name", "70um以上异物检出数(颗)");
+            supers.put("data", 3);
+            supers.put("result", "阴性");
+            statistics40.put("name", "40-50um异物检出率(%)");
+            statistics40.put("data", 2);
+            statistics40.put("result", "阴性");
+            statistics50.put("name", "50-60um异物检出率(%)");
+            statistics50.put("data", 2);
+            statistics60.put("name", "60-70um异物检出率(%)");
+            statistics60.put("data", 2);
+            statistics70.put("name", "70um以上异物检出率(%)");
+            statistics70.put("data", 2);
+            jsonObject.put("floatdta", floatdata);
+            jsonObject.put("glassprecent", glassprecent);
+            jsonObject.put("glasstime", glasstime);
+            jsonObject.put("max", max);
+            jsonObject.put("min", min);
+            jsonObject.put("supers", supers);
+            jsonObject.put("statistics40", statistics40);
+            jsonObject.put("statistics50", statistics50);
+            jsonObject.put("statistics60", statistics60);
+            jsonObject.put("statistics70", statistics70);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 }
