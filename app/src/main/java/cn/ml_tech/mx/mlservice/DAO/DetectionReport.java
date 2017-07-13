@@ -212,6 +212,7 @@ public class DetectionReport extends DataSupport implements Parcelable {
         this.userName = userName;
     }
 
+
     @Override
     public int describeContents() {
         return 0;
@@ -231,7 +232,7 @@ public class DetectionReport extends DataSupport implements Parcelable {
         dest.writeLong(this.date != null ? this.date.getTime() : -1);
         dest.writeByte(this.deprecate ? (byte) 1 : (byte) 0);
         dest.writeByte(this.ispdfdown ? (byte) 1 : (byte) 0);
-        dest.writeList(this.listDetail);
+        dest.writeTypedList(this.listDetail);
         dest.writeString(this.drugName);
         dest.writeString(this.factoryName);
         dest.writeString(this.userName);
@@ -254,8 +255,7 @@ public class DetectionReport extends DataSupport implements Parcelable {
         this.date = tmpDate == -1 ? null : new Date(tmpDate);
         this.deprecate = in.readByte() != 0;
         this.ispdfdown = in.readByte() != 0;
-        this.listDetail = new ArrayList<DetectionDetail>();
-        in.readList(this.listDetail, DetectionDetail.class.getClassLoader());
+        this.listDetail = in.createTypedArrayList(DetectionDetail.CREATOR);
         this.drugName = in.readString();
         this.factoryName = in.readString();
         this.userName = in.readString();

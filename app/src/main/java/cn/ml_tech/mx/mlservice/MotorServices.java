@@ -51,6 +51,9 @@ public class MotorServices extends Service {
     private String user_id = "";
     private long userid;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private DetectionDetail detectionDetail;
+
+    private long reportid;
     private DetectionReport detectionReport;
 
     public MotorServices() {
@@ -499,28 +502,10 @@ public class MotorServices extends Service {
 
         @Override
         public List<DetectionReport> queryDetectionReport(String detectionSn, String drugInfo, String factoryName, String detectionNumber, String detectionBatch, String startTime, String stopTime, int page) throws RemoteException {
-            Log.d("zw", "queryDetectionReport");
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            long start = 0, end = 0;
             List<DetectionReport> detectionReports = new ArrayList<>();
             detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and detectionNumber like ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber + "%", detectionBatch + "%").find(DetectionReport.class);
-//            Cursor c = null;
-//            c = DataSupport.findBySQL("select * from DetectionReport where drugName like ? and factoryName like ? and detectionSn like ? " +
-//                    "and detectionNumber like ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber + "%", detectionBatch + "%");
-//            while (c.moveToNext()) {
-//                DetectionReport detectionReport = new DetectionReport();
-//                detectionReport.setId(c.getLong(c.getColumnIndex("id")));
-//                detectionReport.setUser_id(c.getLong(c.getColumnIndex("user_id")));
-//                detectionReport.setDruginfo_id(c.getLong(c.getColumnIndex("druginfo_id")));
-//                detectionReport.setDetectionBatch(c.getString(c.getColumnIndex("detectionBatch")));
-//                detectionReport.setDetectionNumber(c.getString(c.getColumnIndex("detectionNumber")));
-//                detectionReport.setDetectionFirstCount(c.getInt(c.getColumnIndex("detectionFirstCount")));
-//                detectionReport.setDetectionCount(c.getInt(c.getColumnIndex("detectionCount")));
-//                detectionReport.setDetectionSecondCount(c.getInt(c.getColumnIndex("detectionSecondCount")));
-//                detectionReport.setFactoryName(c.getString(c.getColumnIndex("factoryName")));
-//                detectionReport.setDrugName(c.getString(c.getColumnIndex("drugName")));
-//                detectionReport.setUserName(c.getString(c.getColumnIndex("userName")));
-//
-//                detectionReports.add(detectionReport);
-//            }
             return detectionReports;
         }
 
@@ -612,62 +597,77 @@ public class MotorServices extends Service {
                     detectionReport.setDate(new Date());
                     detectionReport.setDetectionCount(checkNum);
                     detectionReport.setDruginfo_id(drug_id);
+                    detectionReport.setDetectionCount(checkNum);
                     detectionReport.setDrugName(DataSupport.find(DrugInfo.class, drug_id).getName());
                     detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, drug_id).getFactory_id()).getName());
-
                 } else {
                     detectionReport = DataSupport.findLast(DetectionReport.class);
                 }
-                new Thread() {
-                    /**
-                     *
-                     */
-                    @Override
-                    public void run() {
-                        super.run();
-                        for (int i = 0; i < checkNum; i++) {
-                            try {
-                                Thread.sleep(1000);
-                                simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
-                                if (isFirst) {
-                                    detectionReport.setDetectionFirstCount(i + 1);
-                                } else {
-                                    detectionReport.setDetectionSecondCount(i + 1);
-                                }
-                                if ((i == 0) && (detectionSn.equals("")) && isFirst) {
-                                    Log.d("zw", "saveCheckDate");
-                                    saveCheckDate();
-                                }
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                }.start();
-
-            } else {
-                List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
-                final DetectionReport detectionReport = detectionReports.get(0);
                 new Thread() {
                     @Override
                     public void run() {
                         super.run();
                         try {
-                            Thread.sleep(500);
-                            if (detectionReport.getDetectionSecondCount() == 0) {
-                                for (int i = detectionReport.getDetectionFirstCount(); i < checkNum; i++) {
-                                    simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
-                                }
-                            } else {
-                                for (int i = detectionReport.getDetectionSecondCount(); i < checkNum; i++) {
-                                    simulatieDate(i, checkNum, isFirst, detectionReport, detectionSn);
+                            for (int i = 0; i < checkNum; i++) {
+                                Thread.sleep(500);
+                                try {
+                                    if (isFirst) {
+                                        detectionReport.setDetectionFirstCount(i + 1);
+                                    } else
+                                        detectionReport.setDetectionSecondCount(i + 1);
+                                    if (i == 0) {
+                                        detectionReport.save();
+                                        detectionReport.clearSavedState();
+                                        reportid = detectionReport.getId();
+                                    } else {
+                                        detectionReport.update(detectionReport.getId());
+                                    }
+                                    simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
+                                    if ((i == 0) && (detectionSn.equals("")) && isFirst) {
+                                        saveCheckDate();
+                                    }
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
                                 }
                             }
                         } catch (InterruptedException e) {
                             e.printStackTrace();
-                        } catch (JSONException e) {
+                        }
+                    }
+                }.start();
+            } else {
+                Log.d("zw", "detectionsn" + detectionSn);
+                List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
+                final DetectionReport Report = detectionReports.get(0);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        try {
+                            try {
+                                Thread.sleep(500);
+                                Log.d("zw", "secondcount" + Report.getDetectionSecondCount());
+                                if (Report.getDetectionSecondCount() == 0 && Report.getDetectionCount() > Report.getDetectionFirstCount()) {
+                                    for (int i = Report.getDetectionFirstCount(); i < checkNum; i++) {
+                                        reportid = Report.getId();
+                                        Report.setDetectionFirstCount(Report.getDetectionFirstCount() + 1);
+                                        Report.update(Report.getId());
+                                        simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
+                                    }
+                                } else {
+                                    for (int i = Report.getDetectionSecondCount(); i < checkNum; i++) {
+                                        Report.setDetectionSecondCount(Report.getDetectionSecondCount() + 1);
+                                        Report.update(Report.getId());
+                                        reportid = Report.getId();
+                                        simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
+                                    }
+                                }
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+
+                        } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
                     }
@@ -721,6 +721,12 @@ public class MotorServices extends Service {
             DrugControls drugControls = new DrugControls(drugInfo.getName(), drugBottleType, factory_name, drugInfo.getPinyin()
                     , drugInfo.getEnname(), drugInfo.getId());
             return drugControls;
+        }
+
+        @Override
+        public DevUuid getDevUuidInfo() throws RemoteException {
+
+            return DataSupport.find(DevUuid.class, 1);
         }
 
 
@@ -938,17 +944,23 @@ public class MotorServices extends Service {
         return result;
     }
 
+
     /**
-     * 模拟检测到药品的数据
+     * 模拟检测药品数据
      *
      * @param i
+     * @param checkNum
      * @param isFirst
-     * @param detectionDetails
-     * @param detectionReport
+     * @param reportid
+     * @param detectionSn
      * @throws JSONException
      */
-    public synchronized void simulatieDate(int i, int checkNum, boolean isFirst, DetectionReport detectionReport, String detectionSn) throws JSONException {
+    public synchronized void simulatieDate(int i, int checkNum, boolean isFirst, long reportid, String detectionSn) throws JSONException {
+
+        Log.d("zw", "in " + reportid);
+
         DetectionDetail detectionDetail = new DetectionDetail();
+        detectionDetail.setDetectionreport_id(reportid);
         detectionDetail.setPositive(true);
         detectionDetail.setColorFactor(150);
         detectionDetail.setScrTime(4.0);
@@ -970,10 +982,9 @@ public class MotorServices extends Service {
         JSONObject jsonObject = new JSONObject();
         setNodeInfo(jsonObject, i);
         detectionDetail.setNodeInfo(jsonObject.toString());
-        detectionReport.save();
-        detectionDetail.setDetectionreport_id(DataSupport.findLast(DetectionReport.class).getId());
+        Log.d("zw", "out " + detectionDetail.getDetectionreport_id());
         detectionDetail.save();
-        Log.d("zw", DataSupport.findLast(DetectionReport.class).getId() + "id");
+
         if (intent == null) {
             intent = new Intent();
         }

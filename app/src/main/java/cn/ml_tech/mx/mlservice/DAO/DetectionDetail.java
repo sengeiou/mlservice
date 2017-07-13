@@ -59,7 +59,7 @@ import org.litepal.crud.DataSupport;
 public class DetectionDetail extends DataSupport implements Parcelable {
     @Column(unique = true,nullable = false)
     private long id;
-    @Column( nullable = false)
+    @Column(nullable = false)
     private  long detectionreport_id;
     @Column(nullable = false)
     private  int detIndex;

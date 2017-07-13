@@ -61,8 +61,7 @@
         List<DrugContainer>getDrugContainer();
         List<DrugParam> getDrugParamById(in int id);
         void Validate(in int drug_id,in int location);
-        List<DetectionReport> queryDetectionReport();
-
+        List<DetectionReport> queryDetectionReport(String detectionSn,String drugInfo,String factoryName,String detectionNumber,String detectionBatch,String startTime,String stopTime,in int page);
         void enterBottle();
         void bottleTest(int num);
         void leaveBottle();
@@ -73,5 +72,5 @@
         List<DetectionDetail> queryDetectionDetailByReportId(long id);
         DetectionReport getLastReport();
         DrugControls queryDrugControlsById(long id);
-
+        DevUuid getDevUuidInfo();
     }
