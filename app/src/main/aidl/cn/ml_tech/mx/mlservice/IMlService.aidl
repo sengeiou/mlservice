@@ -22,6 +22,7 @@
     import cn.ml_tech.mx.mlservice.DAO.DrugParam;
     import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
     import cn.ml_tech.mx.mlservice.DAO.ResultModule;
+
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -74,4 +75,7 @@
         DetectionReport getLastReport();
         DrugControls queryDrugControlsById(long id);
         DevUuid getDevUuidInfo();
+        List<DetectionReport> getAllDetectionReports();
+        List<UserType> getAllUserType();
+        void updateUser(in User user);
     }

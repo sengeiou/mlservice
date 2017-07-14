@@ -47,7 +47,7 @@ public class UserType implements Parcelable {
         this.typeName = in.readString();
     }
 
-    public static final Parcelable.Creator<UserType> CREATOR = new Parcelable.Creator<UserType>() {
+    public static final Creator<UserType> CREATOR = new Creator<UserType>() {
         @Override
         public UserType createFromParcel(Parcel source) {
             return new UserType(source);

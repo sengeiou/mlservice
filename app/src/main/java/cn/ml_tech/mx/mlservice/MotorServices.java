@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,6 +39,7 @@ import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 
 import static android.content.ContentValues.TAG;
+import static java.lang.Long.parseLong;
 import static org.litepal.crud.DataSupport.find;
 import static org.litepal.crud.DataSupport.findAll;
 import static org.litepal.crud.DataSupport.where;
@@ -51,6 +53,7 @@ public class MotorServices extends Service {
     private String user_id = "";
     private long userid;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+    private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     private DetectionDetail detectionDetail;
 
     private long reportid;
@@ -137,7 +140,7 @@ public class MotorServices extends Service {
             if (Integer.parseInt(id) == 0) {
                 drugInfo.save();
             } else {
-                drugInfo.setId(Long.parseLong(id));
+                drugInfo.setId(parseLong(id));
                 drugInfo.saveOrUpdate("id = ?", String.valueOf(drugInfo.getId()));
             }
             log("add Drug info....");
@@ -209,7 +212,7 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<cn.ml_tech.mx.mlservice.Bean.User> getUserList() throws RemoteException {
+        public List<User> getUserList() throws RemoteException {
             List<User> list = new ArrayList<User>();
             Connector.getDatabase();
             List<cn.ml_tech.mx.mlservice.DAO.User> listDao = DataSupport.
@@ -503,9 +506,26 @@ public class MotorServices extends Service {
         @Override
         public List<DetectionReport> queryDetectionReport(String detectionSn, String drugInfo, String factoryName, String detectionNumber, String detectionBatch, String startTime, String stopTime, int page) throws RemoteException {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            long start = 0, end = 0;
+            long start = 0, end = 0, current = 0;
+
             List<DetectionReport> detectionReports = new ArrayList<>();
-            detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and detectionNumber like ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber + "%", detectionBatch + "%").find(DetectionReport.class);
+            detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and drugBottleType = ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber.trim(), detectionBatch + "%").find(DetectionReport.class);
+            try {
+                for (int i = 0; i < detectionReports.size(); i++) {
+                    DetectionReport detectionReport = detectionReports.get(i);
+                    start = Long.parseLong(dateFormat.format(simpleDateFormat.parse(startTime)));
+                    end = Long.parseLong(dateFormat.format(simpleDateFormat.parse(stopTime)));
+                    current = Long.parseLong(dateFormat.format(detectionReport.getDate()));
+                    if (current < start || current > end) {
+                        detectionReports.remove(i);
+                        i--;
+                    }
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+
             return detectionReports;
         }
 
@@ -598,6 +618,7 @@ public class MotorServices extends Service {
                     detectionReport.setDetectionSn(getDetectionSn());
                     detectionReport.setDetectionBatch(detectionBatch);
                     detectionReport.setDetectionNumber(detectionNumber);
+                    detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, drug_id).getDrugcontainer_id()).getName());
                     detectionReport.setUser_id(userid);
                     detectionReport.setUserName(user_id);
                     detectionReport.setDate(new Date());
@@ -733,6 +754,21 @@ public class MotorServices extends Service {
         public DevUuid getDevUuidInfo() throws RemoteException {
 
             return DataSupport.find(DevUuid.class, 1);
+        }
+
+        @Override
+        public List<DetectionReport> getAllDetectionReports() throws RemoteException {
+            return DataSupport.findAll(DetectionReport.class);
+        }
+
+        @Override
+        public List<cn.ml_tech.mx.mlservice.Bean.UserType> getAllUserType() throws RemoteException {
+            return DataSupport.findAll(cn.ml_tech.mx.mlservice.Bean.UserType.class);
+        }
+
+        @Override
+        public void updateUser(User user) throws RemoteException {
+
         }
 
 
@@ -892,7 +928,6 @@ public class MotorServices extends Service {
             devUuid.save();
         }
         //测试数据
-
         return mBinder;
     }
 
@@ -967,7 +1002,8 @@ public class MotorServices extends Service {
 
         DetectionDetail detectionDetail = new DetectionDetail();
         detectionDetail.setDetectionreport_id(reportid);
-        detectionDetail.setPositive(true);
+
+        detectionDetail.setPositive(i % 2 == 0 ? true : false);
         detectionDetail.setColorFactor(150);
         detectionDetail.setScrTime(4.0);
         detectionDetail.setStpTime(3.0);
