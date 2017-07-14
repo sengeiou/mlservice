@@ -12,26 +12,26 @@ import java.util.List;
 
 /**
  * CREATE TABLE drugContainer
- (
- id integer primary key AUTOINCREMENT   not null,
- name text not null unique,
- type  INTEGER not null,
- specification INTEGER not null,
- diameter REAL not null,
- height REAL,
- trayID INTEGER not null,
- srcTime REAL not null,
- stpTime REAL not null,
- channelValue1 REAL not null,
- channelValue2 REAL not null,
- channelValue3 REAL not null,
- channelValue4 REAL not null,
- shadeParam REAL not null,
- rotateSpeed INTEGER NOT NULL DEFAULT 4500,
- sendParam REAL not null,
- foreign key (specification) REFERENCES specificationType(id),
- foreign key (trayID) REFERENCES tray(id)
- );
+ * (
+ * id integer primary key AUTOINCREMENT   not null,
+ * name text not null unique,
+ * type  INTEGER not null,
+ * specification INTEGER not null,
+ * diameter REAL not null,
+ * height REAL,
+ * trayID INTEGER not null,
+ * srcTime REAL not null,
+ * stpTime REAL not null,
+ * channelValue1 REAL not null,
+ * channelValue2 REAL not null,
+ * channelValue3 REAL not null,
+ * channelValue4 REAL not null,
+ * shadeParam REAL not null,
+ * rotateSpeed INTEGER NOT NULL DEFAULT 4500,
+ * sendParam REAL not null,
+ * foreign key (specification) REFERENCES specificationType(id),
+ * foreign key (trayID) REFERENCES tray(id)
+ * );
  */
 /*
 *
@@ -55,34 +55,43 @@ import java.util.List;
 */
 
 public class DetectionReport extends DataSupport implements Parcelable {
-    @Column(unique = true,nullable = false)
-    private  long id;
+    @Column(unique = true, nullable = false)
+    private long id;
     @Column(nullable = false)
     private long user_id;
     @Column(nullable = false)
     private long druginfo_id;
     @Column(nullable = false)
     private String detectionSn;
-    @Column( nullable = false)
+    @Column(nullable = false)
     private String detectionNumber;
     @Column(nullable = false)
-    private  String detectionBatch;
-    @Column( nullable = false)
-    private  int detectionCount;
+    private String detectionBatch;
     @Column(nullable = false)
-    private  int detectionFirstCount;
-    @Column( nullable = false)
-    private  int detectionSecondCount;
+    private int detectionCount;
     @Column(nullable = false)
-    private  Date date;
-    @Column( nullable = false,defaultValue = "false")
+    private int detectionFirstCount;
+    @Column(nullable = false)
+    private int detectionSecondCount;
+    @Column(nullable = false)
+    private Date date;
+    @Column(nullable = false, defaultValue = "false")
     private boolean deprecate;
-    @Column( nullable = false,defaultValue = "false")
+    @Column(nullable = false, defaultValue = "false")
     private boolean ispdfdown;
-    private List<DetectionDetail>listDetail=new ArrayList<DetectionDetail>();
+    private List<DetectionDetail> listDetail = new ArrayList<DetectionDetail>();
     protected String drugName;
     protected String factoryName;
     protected String userName;
+    private String drugBottleType;
+
+    public String getDrugBottleType() {
+        return drugBottleType;
+    }
+
+    public void setDrugBottleType(String drugBottleType) {
+        this.drugBottleType = drugBottleType;
+    }
 
     public long getId() {
         return id;
@@ -213,6 +222,9 @@ public class DetectionReport extends DataSupport implements Parcelable {
     }
 
 
+    public DetectionReport() {
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -236,9 +248,7 @@ public class DetectionReport extends DataSupport implements Parcelable {
         dest.writeString(this.drugName);
         dest.writeString(this.factoryName);
         dest.writeString(this.userName);
-    }
-
-    public DetectionReport() {
+        dest.writeString(this.drugBottleType);
     }
 
     protected DetectionReport(Parcel in) {
@@ -259,9 +269,10 @@ public class DetectionReport extends DataSupport implements Parcelable {
         this.drugName = in.readString();
         this.factoryName = in.readString();
         this.userName = in.readString();
+        this.drugBottleType = in.readString();
     }
 
-    public static final Parcelable.Creator<DetectionReport> CREATOR = new Parcelable.Creator<DetectionReport>() {
+    public static final Creator<DetectionReport> CREATOR = new Creator<DetectionReport>() {
         @Override
         public DetectionReport createFromParcel(Parcel source) {
             return new DetectionReport(source);
