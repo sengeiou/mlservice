@@ -569,6 +569,12 @@ public class MotorServices extends Service {
         }
 
         @Override
+        public void deteleDetectionInfoById(long id) throws RemoteException {
+            DataSupport.delete(DetectionReport.class, id);
+            DataSupport.deleteAll(DetectionDetail.class, "detectionreport_id = ?", id + "");
+        }
+
+        @Override
         public void deleteDrugParamById(int id) throws RemoteException {
             DataSupport.deleteAllAsync(DrugParam.class, "druginfo_id = ? ", String.valueOf(id));
         }
@@ -1045,7 +1051,7 @@ public class MotorServices extends Service {
             jsonObject.put("glasstime", glasstime);
             jsonObject.put("max", max);
             jsonObject.put("min", min);
-            jsonObject.put("supers", supers);
+            jsonObject.put("super", supers);
             jsonObject.put("statistics40", statistics40);
             jsonObject.put("statistics50", statistics50);
             jsonObject.put("statistics60", statistics60);

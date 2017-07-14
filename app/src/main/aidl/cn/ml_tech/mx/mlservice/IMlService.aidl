@@ -65,6 +65,7 @@
         void enterBottle();
         void bottleTest(int num);
         void leaveBottle();
+        void deteleDetectionInfoById(long id);
         void deleteDrugParamById(in int id);
         void startCheck(in int drug_id,in int checkNum, in int rotateNum,String detectionNumber,String detectionBatch,boolean isFirst,String detectionSn);
         String getDetectionSn();
