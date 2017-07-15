@@ -78,4 +78,5 @@
         List<UserType> getAllUserType();
         void updateUser(in User user);
         UserType getUserTypeById(long id);
+        void deleteUserById(in long id);
     }

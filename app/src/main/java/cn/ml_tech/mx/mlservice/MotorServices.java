@@ -106,15 +106,23 @@ public class MotorServices extends Service {
             //之后的代码有待完成
         }
 
+        /**
+         * @param name
+         * @param password
+         * @return
+         * @throws RemoteException
+         */
         @Override
         public boolean checkAuthority(String name, String password) throws RemoteException {
             log(name);
             log(password);
             List<cn.ml_tech.mx.mlservice.DAO.User> users = where("userName = ? and userPassword = ?", name, password).find(cn.ml_tech.mx.mlservice.DAO.User.class);
             log(users.size() + "userssize");
-            user_id = users.get(0).getUserId();
-            userid = users.get(0).getId();
-            return !users.isEmpty();
+            if (users.size() != 0) {
+                user_id = users.get(0).getUserId();
+                userid = users.get(0).getId();
+            }
+            return users.size() == 0 ? false : true;
         }
 
         /**
@@ -493,6 +501,10 @@ public class MotorServices extends Service {
 
             List<DetectionReport> detectionReports = new ArrayList<>();
             detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and drugBottleType = ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber.trim(), detectionBatch + "%").find(DetectionReport.class);
+            if (page != -1) {
+                detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and drugBottleType = ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber.trim(), detectionBatch + "%").limit(20).offset(((page - 1) * 20)).find(DetectionReport.class);
+
+            }
             try {
                 for (int i = 0; i < detectionReports.size(); i++) {
                     DetectionReport detectionReport = detectionReports.get(i);
@@ -751,12 +763,20 @@ public class MotorServices extends Service {
 
         @Override
         public void updateUser(User user) throws RemoteException {
-            user.update(user.getId());
+            Log.d("zw", user.getUserPassword());
+            Log.d("zw", "keyong" + user.getIsEnable());
+            Log.d("zw", "id " + user.getId());
+            user.saveOrUpdate("id = ?", user.getId() + "");
         }
 
         @Override
         public UserType getUserTypeById(long id) throws RemoteException {
             return DataSupport.find(UserType.class, id);
+        }
+
+        @Override
+        public void deleteUserById(long id) throws RemoteException {
+            DataSupport.delete(User.class, id);
         }
 
     };
@@ -793,10 +813,15 @@ public class MotorServices extends Service {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
+            user.clearSavedState();
+            user.setUsertype_id(2);
+            user.setUserId("Zw1025");
+            user.setIsEnable(1);
+            user.setUserName("Zw1025");
+            user.setUserPassword("Zw1025");
+            user.setCreateDate(simpleDateFormat.format(new Date()));
+            user.save();
         }
-        //测试
-
-
         if (LogUtil.isApkInDebug(this)) {
             if (!DataSupport.isExist(CameraParams.class)) {
                 CameraParams cameraParams = new CameraParams();
@@ -806,16 +831,19 @@ public class MotorServices extends Service {
             }
             if (!DataSupport.isExist(AuditTrailEventType.class)) {
                 AuditTrailEventType eventType = new AuditTrailEventType();
-                eventType.setName("add");
+                eventType.setName("Add");
                 eventType.save();
                 eventType.clearSavedState();
-                eventType.setName("update");
+                eventType.setName("Delete");
                 eventType.save();
                 eventType.clearSavedState();
-                eventType.setName("delete");
+                eventType.setName("Modify");
                 eventType.save();
                 eventType.clearSavedState();
-                eventType.setName("select");
+                eventType.setName("Query");
+                eventType.save();
+                eventType.clearSavedState();
+                eventType.setName("Other");
                 eventType.save();
                 eventType.clearSavedState();
             }
@@ -832,8 +860,21 @@ public class MotorServices extends Service {
             }
             if (!DataSupport.isExist(AuditTrailInfoType.class)) {
                 AuditTrailInfoType infoType = new AuditTrailInfoType();
-                infoType.setName("information");
+                infoType.setName("Information");
                 infoType.save();
+                infoType.clearSavedState();
+                infoType.setName("Question");
+                infoType.save();
+                infoType.clearSavedState();
+                infoType.setName("Warning");
+                infoType.save();
+                infoType.clearSavedState();
+                infoType.setName("Critical");
+                infoType.save();
+                infoType.clearSavedState();
+                infoType.setName("Other");
+                infoType.save();
+                infoType.clearSavedState();
             }
             if (!DataSupport.isExist(DrugContainer.class)) {
                 DrugContainer drugContainer = new DrugContainer();
@@ -903,6 +944,15 @@ public class MotorServices extends Service {
 
             factory.save();
         }
+        if (!DataSupport.isExist(AuditTrail.class)) {
+            AuditTrail auditTrail = new AuditTrail();
+            auditTrail.setEvent_id(1);
+            auditTrail.setId(1);
+            auditTrail.setTime("2017-07-15");
+            auditTrail.setUsername("admin");
+            auditTrail.setValue("Login Sucess");
+            auditTrail.save();
+        }
         if (!DataSupport.isExist(DevUuid.class)) {
             DevUuid devUuid = new DevUuid();
             devUuid.setUserAbbreviation("admin");
@@ -913,6 +963,28 @@ public class MotorServices extends Service {
             devUuid.setDevFactory("浙江猛凌机电科技有限公司");
             devUuid.setDevDateOfProduction(new Date());
             devUuid.save();
+        }
+        if (!DataSupport.isExist(DetectionReport.class)) {
+            DetectionReport detectionReport = new DetectionReport();
+            for (int i = 0; i < 66; i++) {
+                detectionReport.setDetectionSn(getDevUuid() + getDetectionSnDate());
+                detectionReport.setDetectionBatch("batch" + i);
+                detectionReport.setDetectionNumber("number" + i);
+                detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, 1).getDrugcontainer_id()).getName());
+                detectionReport.setUser_id(userid);
+                detectionReport.setUserName(user_id);
+                detectionReport.setDate(new Date());
+                detectionReport.setDetectionCount(0);
+                detectionReport.setUserName("Admin");
+                detectionReport.setDruginfo_id(1);
+                detectionReport.setDrugName(DataSupport.find(DrugInfo.class, 1).getName());
+                detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, 1).getFactory_id()).getName());
+                detectionReport.setDetectionFirstCount(0);
+                detectionReport.setDetectionSecondCount(0);
+                detectionReport.save();
+                detectionReport.clearSavedState();
+            }
+
         }
         //测试数据
         return mBinder;

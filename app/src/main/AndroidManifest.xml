@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cn.ml_tech.mx.mlservice">
+    <instrumentation
+        android:name="android.test.InstrumentationTestRunner"
+        android:label="niemi"
+        android:targetPackage="cn.ml_tech.mx.mlservice" >
+    </instrumentation>
 
     <application
         android:name="org.litepal.LitePalApplication"
@@ -23,8 +28,8 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-            <action android:name="cn.ml_tech.mx.mlservice.MotorServices"/>
-            <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="cn.ml_tech.mx.mlservice.MotorServices" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
     </application>
