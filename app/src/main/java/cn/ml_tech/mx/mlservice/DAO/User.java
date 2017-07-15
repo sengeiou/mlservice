@@ -6,6 +6,8 @@ import android.os.Parcelable;
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
+import java.sql.Date;
+
 /**
  * CREATE TABLE user
  * (
@@ -46,14 +48,14 @@ public class User extends DataSupport implements Parcelable {
     @Column(nullable = false)
     private String userName;
     @Column(nullable = false)
-    private int userEnable;
+    private int isEnable;
     @Column(nullable = false)
     private long usertype_id;
     @Column(nullable = false, defaultValue = "false")
-    private boolean isDeprecated;
+    private boolean isDeparecate;
     @Column(nullable = false)
     private String createDate;
-
+    private Date loginDate;
     public long getId() {
         return id;
     }
@@ -86,13 +88,6 @@ public class User extends DataSupport implements Parcelable {
         this.userName = userName;
     }
 
-    public int getUserEnable() {
-        return userEnable;
-    }
-
-    public void setUserEnable(int userEnable) {
-        this.userEnable = userEnable;
-    }
 
     public long getUsertype_id() {
         return usertype_id;
@@ -102,13 +97,6 @@ public class User extends DataSupport implements Parcelable {
         this.usertype_id = usertype_id;
     }
 
-    public boolean isDeprecated() {
-        return isDeprecated;
-    }
-
-    public void setDeprecated(boolean deprecated) {
-        isDeprecated = deprecated;
-    }
 
     public String getCreateDate() {
         return createDate;
@@ -116,6 +104,31 @@ public class User extends DataSupport implements Parcelable {
 
     public void setCreateDate(String createDate) {
         this.createDate = createDate;
+    }
+
+    public int getIsEnable() {
+        return isEnable;
+    }
+
+    public void setIsEnable(int isEnable) {
+        this.isEnable = isEnable;
+    }
+
+    public boolean isDeparecate() {
+        return isDeparecate;
+    }
+
+    public void setDeparecate(boolean deparecate) {
+        isDeparecate = deparecate;
+    }
+
+
+    public Date getLoginDate() {
+        return loginDate;
+    }
+
+    public void setLoginDate(Date loginDate) {
+        this.loginDate = loginDate;
     }
 
     @Override
@@ -129,10 +142,11 @@ public class User extends DataSupport implements Parcelable {
         dest.writeString(this.userId);
         dest.writeString(this.userPassword);
         dest.writeString(this.userName);
-        dest.writeInt(this.userEnable);
+        dest.writeInt(this.isEnable);
         dest.writeLong(this.usertype_id);
-        dest.writeByte(this.isDeprecated ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.isDeparecate ? (byte) 1 : (byte) 0);
         dest.writeString(this.createDate);
+        dest.writeSerializable(this.loginDate);
     }
 
     public User() {
@@ -143,10 +157,11 @@ public class User extends DataSupport implements Parcelable {
         this.userId = in.readString();
         this.userPassword = in.readString();
         this.userName = in.readString();
-        this.userEnable = in.readInt();
+        this.isEnable = in.readInt();
         this.usertype_id = in.readLong();
-        this.isDeprecated = in.readByte() != 0;
+        this.isDeparecate = in.readByte() != 0;
         this.createDate = in.readString();
+        this.loginDate = (Date) in.readSerializable();
     }
 
     public static final Parcelable.Creator<User> CREATOR = new Parcelable.Creator<User>() {

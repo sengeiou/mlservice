@@ -6,42 +6,27 @@ import android.os.Parcelable;
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
-/**
- * CREATE TABLE factory
- (
- id integer primary key AUTOINCREMENT not null,
- name text not null unique,
- address text not null,
- phone text,
- fax text,
- mail text
- contactName text
- contactPhone text,
- webSite text
- , province_code TEXT default NULL, city_code TEXT default NULL, area_code TEXT default NULL, contactName text, contactPhone text);
- */
-
 public class UserType extends DataSupport implements Parcelable {
 
     @Column(nullable = false, unique = true)
-    private long type_id;
+    private long typeId;
     @Column(nullable = false, unique = true)
-    private String name;
+    private String typeName;
 
-    public long getType_id() {
-        return type_id;
+    public long getTypeId() {
+        return typeId;
     }
 
-    public void setType_id(long type_id) {
-        this.type_id = type_id;
+    public void setTypeId(long typeId) {
+        this.typeId = typeId;
     }
 
-    public String getName() {
-        return name;
+    public String getTypeName() {
+        return typeName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setTypeName(String typeName) {
+        this.typeName = typeName;
     }
 
     @Override
@@ -51,16 +36,16 @@ public class UserType extends DataSupport implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(this.type_id);
-        dest.writeString(this.name);
+        dest.writeLong(this.typeId);
+        dest.writeString(this.typeName);
     }
 
     public UserType() {
     }
 
     protected UserType(Parcel in) {
-        this.type_id = in.readLong();
-        this.name = in.readString();
+        this.typeId = in.readLong();
+        this.typeName = in.readString();
     }
 
     public static final Parcelable.Creator<UserType> CREATOR = new Parcelable.Creator<UserType>() {

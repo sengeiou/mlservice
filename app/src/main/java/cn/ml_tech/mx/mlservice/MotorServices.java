@@ -19,7 +19,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import cn.ml_tech.mx.mlservice.Bean.User;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
@@ -35,6 +34,7 @@ import cn.ml_tech.mx.mlservice.DAO.Factory;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
+import cn.ml_tech.mx.mlservice.DAO.User;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 
@@ -215,26 +215,9 @@ public class MotorServices extends Service {
         public List<User> getUserList() throws RemoteException {
             List<User> list = new ArrayList<User>();
             Connector.getDatabase();
-            List<cn.ml_tech.mx.mlservice.DAO.User> listDao = DataSupport.
-                    select(new String[]{"id", "userid", "username", "usertype_id", "userenable"}).
-                    where("isdeprecated=?", "0")
-                    .find(cn.ml_tech.mx.mlservice.DAO.User.class);
-            for (cn.ml_tech.mx.mlservice.DAO.User user : listDao) {
-                User userBean = new User();
-                if (user.getUserEnable() == 0)
-                    userBean.setEnable(false);
-                else
-                    userBean.setEnable(true);
-                userBean.setUserName(user.getUserName());
-                userBean.setUserId(user.getUserId());
-                userBean.setDeparecate(user.isDeprecated());
-                cn.ml_tech.mx.mlservice.Bean.UserType userType = new cn.ml_tech.mx.mlservice.Bean.UserType((int) user.getUsertype_id(), "");
-                userBean.setUserType(userType);
-                list.add(userBean);
-            }
-            Log.d(TAG, "getUserList: " + String.valueOf(listDao.size()));
-            Log.d(TAG, "getUserList: " + String.valueOf(list.size()));
-            return list;
+            List<User> listDao = DataSupport
+                    .findAll(User.class);
+            return listDao;
         }
 
         @Override
@@ -762,15 +745,19 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<cn.ml_tech.mx.mlservice.Bean.UserType> getAllUserType() throws RemoteException {
-            return DataSupport.findAll(cn.ml_tech.mx.mlservice.Bean.UserType.class);
+        public List<UserType> getAllUserType() throws RemoteException {
+            return DataSupport.findAll(UserType.class);
         }
 
         @Override
         public void updateUser(User user) throws RemoteException {
-
+            user.update(user.getId());
         }
 
+        @Override
+        public UserType getUserTypeById(long id) throws RemoteException {
+            return DataSupport.find(UserType.class, id);
+        }
 
     };
 
@@ -784,23 +771,23 @@ public class MotorServices extends Service {
 
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
-            userType.setType_id(0);
-            userType.setName("超级管理员");
+            userType.setTypeId(0);
+            userType.setTypeName("超级管理员");
             userType.save();
             userType.clearSavedState();
-            userType.setType_id(1);
-            userType.setName("管理员");
+            userType.setTypeId(1);
+            userType.setTypeName("管理员");
             userType.save();
             userType.clearSavedState();
-            userType.setType_id(2);
-            userType.setName("操作员");
+            userType.setTypeId(2);
+            userType.setTypeName("操作员");
             userType.save();
         }
         if (!DataSupport.isExist(cn.ml_tech.mx.mlservice.DAO.User.class)) {
             cn.ml_tech.mx.mlservice.DAO.User user = new cn.ml_tech.mx.mlservice.DAO.User();
             user.setUsertype_id(1);
             user.setUserId("Admin");
-            user.setUserEnable(1);
+            user.setIsEnable(1);
             user.setUserName("AdminName");
             user.setUserPassword("Admin");
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

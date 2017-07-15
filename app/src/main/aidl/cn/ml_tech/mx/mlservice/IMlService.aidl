@@ -4,8 +4,6 @@
     import cn.ml_tech.mx.mlservice.DrugControls;
     import cn.ml_tech.mx.mlservice.FactoryControls;
     import cn.ml_tech.mx.mlservice.listener.IMlServiceChangeListener;
-    import cn.ml_tech.mx.mlservice.Bean.User;
-    import cn.ml_tech.mx.mlservice.Bean.UserType;
     import cn.ml_tech.mx.mlservice.DAO.DevParam;
     import cn.ml_tech.mx.mlservice.DAO.DevUuid;
     import cn.ml_tech.mx.mlservice.DAO.Tray;
@@ -22,7 +20,8 @@
     import cn.ml_tech.mx.mlservice.DAO.DrugParam;
     import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
     import cn.ml_tech.mx.mlservice.DAO.ResultModule;
-
+    import cn.ml_tech.mx.mlservice.DAO.UserType;
+    import cn.ml_tech.mx.mlservice.DAO.User;
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -78,4 +77,5 @@
         List<DetectionReport> getAllDetectionReports();
         List<UserType> getAllUserType();
         void updateUser(in User user);
+        UserType getUserTypeById(long id);
     }
