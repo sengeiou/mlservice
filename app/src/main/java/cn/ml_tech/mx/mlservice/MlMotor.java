@@ -40,10 +40,15 @@ public class MlMotor {
         }
     }
 
-    public class ReportDataReg {
+    public static class ReportDataReg {
         private int usReg;
         private int ucRegValue;
         private int dataType;
+        public ReportDataReg(int usreg, int ucregv, int datatype) {
+            this.usReg = usreg;
+            this.ucRegValue = ucregv;
+            this.dataType = datatype;
+        }
     }
 
     public class ReportDataState {
@@ -52,4 +57,53 @@ public class MlMotor {
     }
 
     public static native void motorControl(ReportDataVal reportDataVal);
+    public static native void motorReadReg(ReportDataReg reportDataReg);
+    public static native void motorWriteReg(ReportDataReg reportDataReg);
+    public static native void motorQueryState(ReportDataState reportDataState);
+    public static native void motorReset(ReportDataVal ReportDataVal);
+    public static native void motorLightOn();
+    public static native void motorLightOff();
+    public static native void motorClientPID(ReportDataReg reportDataReg);
+    public static native void motorQueryAutoCarreyConnected(ReportDataReg reportDataReg);
+    public static native void motorQueryWaveNum(ReportDataReg reportDataReg);
+    public static native void motorCatchMotor();
+    public static native void motorReleaseMotor();
+    public static native void motorLightSignalOn();
+    public static native void motorLightSignalOff();
+    public static native void motorQueryTooManyBottle(ReportDataReg reportDataReg);
+    public static native void motorLedSpec();
+    public static native void motorLedCarreyHaveBottle();
+    public static native void motorLedRobotMove();
+    public static native void motorLedCatchBottle();
+    public static native void motorLedPressBottle();
+    public static native void motorLedPressFinish();
+    public static native void motorLedCarreyBottleConnect();
+    public static native void motorLedPushBottle();
+    public static native void motorLedRotate();
+    public static native void motorLedStopBottle();
+    public static native void motorLedLight();
+    public static native void motorLedCheck();
+    public static native void motorLedCarreyStart();
+    public static native void motorLedCarreyEmpty();
+    public static native void motorLedComputerRunning();
+    public static native void motorLedPower();
+    public static native void motorLedSpecOff();
+    public static native void motorLedCarreyHaveBottleOff();
+    public static native void motorLedRobotMoveOff();
+    public static native void motorLedCatchBottleOff();
+    public static native void motorLedPressBottleOff();
+    public static native void motorLedPressFinishOff();
+    public static native void motorLedCarreyBottleConnectOff();
+    public static native void motorLedPushBottleOff();
+    public static native void motorLedRotateOff();
+    public static native void motorLedStopBottleOff();
+    public static native void motorLedLightOff();
+    public static native void motorLedCheckOff();
+    public static native void motorLedCarreyStartOff();
+    public static native void motorLedCarreyEmptyOff();
+    public static native void motorLedComputerRunningOff();
+    public static native void motorLedPowerOff();
+    public static native void motorGetVersion(ReportDataReg reportDataReg);
+
+
 }

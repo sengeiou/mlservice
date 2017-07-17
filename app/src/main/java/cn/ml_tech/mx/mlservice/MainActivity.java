@@ -21,5 +21,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         textView.setText(mlMotor.getCLanguageString());
+        MlMotor.ReportDataVal reportDataVal = new MlMotor.ReportDataVal(2, 1, 0x200, 20000, 4000, 1);
+        mlMotor.motorControl(reportDataVal);
+        //MlMotor.ReportDataReg reportDataReg = new MlMotor.ReportDataReg(0,0,1);
+
     }
 }
