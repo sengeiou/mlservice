@@ -39,6 +39,15 @@ public class CameraParams extends DataSupport implements Parcelable {
     @Column( nullable = false)
     private double ParamValue;
 
+    @Override
+    public String toString() {
+        return "CameraParams{" +
+                "id=" + id +
+                ", ParamName='" + ParamName + '\'' +
+                ", ParamValue=" + ParamValue +
+                '}';
+    }
+
     public long getId() {
         return id;
     }

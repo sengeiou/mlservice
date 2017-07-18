@@ -19,7 +19,6 @@ import java.util.Date;
  * foreign key(containerId) REFERENCES drugContainer(id),
  * foreign key (factoryId) REFERENCES factory(id)
  * );
-
  */
 /*
 *
@@ -56,9 +55,10 @@ public class DrugInfo extends DataSupport implements Parcelable {
     @Column(nullable = false)
     private long user_id;
     @Column(nullable = false)
-    private long drugcontainer_id;
+    private long drugcontainerid;
     @Column(nullable = false)
     private long factory_id;
+
     public long getId() {
         return id;
     }
@@ -116,11 +116,11 @@ public class DrugInfo extends DataSupport implements Parcelable {
     }
 
     public long getDrugcontainer_id() {
-        return drugcontainer_id;
+        return drugcontainerid;
     }
 
     public void setDrugcontainer_id(long drugcontainer_id) {
-        this.drugcontainer_id = drugcontainer_id;
+        this.drugcontainerid = drugcontainer_id;
     }
 
     public long getFactory_id() {
@@ -141,7 +141,7 @@ public class DrugInfo extends DataSupport implements Parcelable {
                 ", name='" + name + '\'' +
                 ", pinyin='" + pinyin + '\'' +
                 ", user_id=" + user_id +
-                ", drugcontainer_id=" + drugcontainer_id +
+                ", drugcontainer_id=" + drugcontainerid +
                 ", factory_id=" + factory_id +
                 '}';
     }
@@ -160,7 +160,7 @@ public class DrugInfo extends DataSupport implements Parcelable {
         dest.writeString(this.name);
         dest.writeString(this.pinyin);
         dest.writeLong(this.user_id);
-        dest.writeLong(this.drugcontainer_id);
+        dest.writeLong(this.drugcontainerid);
         dest.writeLong(this.factory_id);
     }
 
@@ -176,7 +176,7 @@ public class DrugInfo extends DataSupport implements Parcelable {
         this.name = in.readString();
         this.pinyin = in.readString();
         this.user_id = in.readLong();
-        this.drugcontainer_id = in.readLong();
+        this.drugcontainerid = in.readLong();
         this.factory_id = in.readLong();
     }
 

@@ -20,6 +20,19 @@ import org.litepal.crud.DataSupport;
  */
 
 public class AuditTrail extends DataSupport implements Parcelable {
+    @Override
+    public String toString() {
+        return "AuditTrail{" +
+                "id=" + id +
+                ", event_id=" + event_id +
+                ", info_id=" + info_id +
+                ", mark='" + mark + '\'' +
+                ", time='" + time + '\'' +
+                ", userauto_id=" + userauto_id +
+                ", username='" + username + '\'' +
+                ", value='" + value + '\'' +
+                '}';
+    }
 
     @Column(nullable = false, unique = true)
     private long id;

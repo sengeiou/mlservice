@@ -22,6 +22,7 @@
     import cn.ml_tech.mx.mlservice.DAO.ResultModule;
     import cn.ml_tech.mx.mlservice.DAO.UserType;
     import cn.ml_tech.mx.mlservice.DAO.User;
+    import cn.ml_tech.mx.mlservice.DAO.Modern;
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -79,4 +80,10 @@
         void updateUser(in User user);
         UserType getUserTypeById(long id);
         void deleteUserById(in long id);
-    }
+        void addAudittrail(in int event_id,in int info_id,String value,String mark);
+        List<String> getAllTableName();
+        List<String> getFieldByName(String name);
+        Modern getDataByTableName(String tableName);
+        void updateData(String tableName,in Modern modern);
+         void deleteData(String tableName,in List<String> id);
+   }

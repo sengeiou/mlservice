@@ -1,14 +1,17 @@
 package cn.ml_tech.mx.mlservice;
 
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.litepal.LitePal;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
@@ -16,7 +19,9 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
@@ -31,6 +36,7 @@ import cn.ml_tech.mx.mlservice.DAO.DrugContainer;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
+import cn.ml_tech.mx.mlservice.DAO.Modern;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
@@ -42,6 +48,7 @@ import static android.content.ContentValues.TAG;
 import static java.lang.Long.parseLong;
 import static org.litepal.crud.DataSupport.find;
 import static org.litepal.crud.DataSupport.findAll;
+import static org.litepal.crud.DataSupport.findBySQL;
 import static org.litepal.crud.DataSupport.where;
 
 
@@ -390,8 +397,24 @@ public class MotorServices extends Service {
         @Override
         public List<AuditTrail> getAuditTrail(String starttime, String stoptime, String user, int event_id, int info_id) throws RemoteException {
             List<AuditTrail> auditTrails = new ArrayList<>();
-            auditTrails = findAll(AuditTrail.class);
-            log(auditTrails.size() + "auditr");
+            auditTrails = DataSupport.where("event_id = ? and info_id = ? and username = ?", event_id + "", info_id + "", user).find(AuditTrail.class);
+
+            try {
+                long start = Long.parseLong(dateFormat.format(format.parse(starttime)));
+                long end = Long.parseLong(dateFormat.format(format.parse(stoptime)));
+                Log.d("zw", "start " + start + " end " + end);
+                for (int i = 0; i < auditTrails.size(); i++) {
+                    AuditTrail auditTrail = auditTrails.get(i);
+                    long current = Long.parseLong(dateFormat.format(format.parse(auditTrail.getTime())));
+                    Log.d("zw", "current " + current);
+                    if (current < start || current > end) {
+                        auditTrails.remove(i);
+                        i--;
+                    }
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
             return auditTrails;
         }
 
@@ -401,10 +424,10 @@ public class MotorServices extends Service {
             List<DrugInfo> drugInfos = new ArrayList<>();
             log("page" + page);
             Cursor c = null;
-            c = DataSupport.findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ?"
+            c = findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ?"
                     , drugname + "%", enname + "%", pinyin + "%");
             if (page != -1) {
-                c = DataSupport.findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ? limit 20 offset " + (page - 1) * 20
+                c = findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ? limit 20 offset " + (page - 1) * 20
                         , drugname + "%", enname + "%", pinyin + "%");
 
             }
@@ -763,9 +786,7 @@ public class MotorServices extends Service {
 
         @Override
         public void updateUser(User user) throws RemoteException {
-            Log.d("zw", user.getUserPassword());
-            Log.d("zw", "keyong" + user.getIsEnable());
-            Log.d("zw", "id " + user.getId());
+
             user.saveOrUpdate("id = ?", user.getId() + "");
         }
 
@@ -779,6 +800,100 @@ public class MotorServices extends Service {
             DataSupport.delete(User.class, id);
         }
 
+        @Override
+        public void addAudittrail(int event_id, int info_id, String value, String mark) throws RemoteException {
+
+        }
+
+        @Override
+        public List<String> getAllTableName() throws RemoteException {
+            List<String> result = new ArrayList<>();
+            Cursor cursor = findBySQL("SELECT name FROM sqlite_master WHERE type='table' order by name");
+            while (cursor.moveToNext()) {
+                if (!cursor.getString(cursor.getColumnIndex("name")).trim().equals("android_metadata"))
+                    result.add(cursor.getString(cursor.getColumnIndex("name")));
+            }
+            return result;
+        }
+
+        @Override
+        public List<String> getFieldByName(String name) throws RemoteException {
+            List<String> result = new ArrayList<>();
+            Cursor cursor = findBySQL("pragma table_info(" + name + ")");
+            while (cursor.moveToNext()) {
+                result.add(cursor.getString(cursor.getColumnIndex("name")));
+            }
+            return result;
+        }
+
+        @Override
+        public Modern getDataByTableName(String tableName) throws RemoteException {
+            Modern modern = new Modern();
+            Map<Integer, List<String>> dataMap = new HashMap<>();
+            List<String> field = new ArrayList<>();
+            Cursor cursor = DataSupport.findBySQL("pragma table_info(" + tableName + ")");
+            while (cursor.moveToNext()) {
+                field.add(cursor.getString(cursor.getColumnIndex("name")));
+            }
+            cursor = DataSupport.findBySQL("select *from " + tableName);
+            int i = 0;
+            while (cursor.moveToNext()) {
+                List<String> data = new ArrayList<>();
+                for (int itme = 0; itme < field.size(); itme++) {
+                    data.add(cursor.getString(cursor.getColumnIndex(field.get(itme))));
+                    Log.d("zw", data.size() + " data.size()");
+                }
+                dataMap.put(i, data);
+                Log.d("zw", " i = " + i);
+                i++;
+            }
+            modern.setMap(dataMap);
+            return modern;
+        }
+
+        /**
+         * @param tableName
+         * @param modern
+         * @throws RemoteException
+         */
+        @Override
+        public void updateData(String tableName, Modern modern) throws RemoteException {
+            Log.d("zw", "updatedata");
+            Map<Integer, List<String>> data = modern.getMap();
+            List<String> field = new ArrayList<>();
+            Cursor cursor = DataSupport.findBySQL("pragma table_info(" + tableName + ")");
+            while (cursor.moveToNext()) {
+                field.add(cursor.getString(cursor.getColumnIndex("name")));
+            }
+            for (int i = 0; i < data.size(); i++) {
+                cursor = DataSupport.findBySQL("select * from " + tableName + " where id = " + data.get(i).get(0));
+                if (cursor.moveToNext()) {
+                    ContentValues values = new ContentValues();
+                    for (int s = 0; s < field.size(); s++) {
+                        values.put(field.get(s), data.get(i).get(s));
+                    }
+                    DataSupport.updateAll(tableName, values, field.get(0) + " = ?", data.get(i).get(0) + "");
+                } else {
+                    Log.d("zw", "insert into ");
+                    SQLiteDatabase sqLiteDatabase = LitePal.getDatabase();
+                    ContentValues value = new ContentValues();
+                    for (int c = 0; c < field.size(); c++) {
+                        value.put(field.get(c), data.get(i).get(c));
+                    }
+                    sqLiteDatabase.insert(tableName, null, value);
+                }
+            }
+        }
+
+        @Override
+        public void deleteData(String tableName, List<String> id) throws RemoteException {
+            Log.d("zw", "start deleteData");
+
+            for (int i = 0; i < id.size(); i++) {
+                Log.d("zw", " id " + id.get(i));
+                DataSupport.deleteAll(tableName, "id = ?", id.get(i));
+            }
+        }
     };
 
     @Override
@@ -803,8 +918,8 @@ public class MotorServices extends Service {
             userType.setTypeName("操作员");
             userType.save();
         }
-        if (!DataSupport.isExist(cn.ml_tech.mx.mlservice.DAO.User.class)) {
-            cn.ml_tech.mx.mlservice.DAO.User user = new cn.ml_tech.mx.mlservice.DAO.User();
+        if (!DataSupport.isExist(User.class)) {
+            User user = new User();
             user.setUsertype_id(1);
             user.setUserId("Admin");
             user.setIsEnable(1);
@@ -823,12 +938,6 @@ public class MotorServices extends Service {
             user.save();
         }
         if (LogUtil.isApkInDebug(this)) {
-            if (!DataSupport.isExist(CameraParams.class)) {
-                CameraParams cameraParams = new CameraParams();
-                cameraParams.setParamName("AGC");
-                cameraParams.setParamValue(1);
-                cameraParams.save();
-            }
             if (!DataSupport.isExist(AuditTrailEventType.class)) {
                 AuditTrailEventType eventType = new AuditTrailEventType();
                 eventType.setName("Add");
@@ -856,7 +965,14 @@ public class MotorServices extends Service {
                 auditTrail.setInfo_id(1);
                 auditTrail.setUsername("testusername");
                 auditTrail.save();
-
+                auditTrail.clearSavedState();
+                auditTrail.setMark("admin");
+                auditTrail.setValue("admin");
+                auditTrail.setTime("2017-07-15");
+                auditTrail.setEvent_id(2);
+                auditTrail.setInfo_id(1);
+                auditTrail.setUsername("zw1025");
+                auditTrail.save();
             }
             if (!DataSupport.isExist(AuditTrailInfoType.class)) {
                 AuditTrailInfoType infoType = new AuditTrailInfoType();
@@ -934,6 +1050,70 @@ public class MotorServices extends Service {
                 config.setParamName("LastDetNum");
                 config.setParamValue("2");
                 config.save();
+                config.clearSavedState();
+                config.setParamName("IpAddress");
+                config.setParamValue("192.168.0.145");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("NetMask");
+                config.setParamValue("255.255.255.0");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("DiskUsedMax");
+                config.setParamValue("90.0");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("GlassTimeMax");
+                config.setParamValue("3.0");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("GlassCountMax");
+                config.setParamValue("20.0");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("FiberMax");
+                config.setParamValue("2");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("FloatMax");
+                config.setParamValue("2");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("StandardDrugRotateCount");
+                config.setParamValue("3");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("userRemeber");
+                config.setParamValue("0");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("userName");
+                config.setParamValue("admin");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("programVersionNum");
+                config.setParamValue("1000109");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("programVersionStr");
+                config.setParamValue("1.0.1.11");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("databaseVersion");
+                config.setParamValue("5");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("databaseVersion");
+                config.setParamValue("5");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("userPass");
+                config.setParamValue("#&/+,");
+                config.save();
+                config.clearSavedState();
+                config.setParamName("LastStandardId");
+                config.setParamValue("4");
+                config.save();
 
             }
         }
@@ -964,29 +1144,42 @@ public class MotorServices extends Service {
             devUuid.setDevDateOfProduction(new Date());
             devUuid.save();
         }
-        if (!DataSupport.isExist(DetectionReport.class)) {
-            DetectionReport detectionReport = new DetectionReport();
-            for (int i = 0; i < 66; i++) {
-                detectionReport.setDetectionSn(getDevUuid() + getDetectionSnDate());
-                detectionReport.setDetectionBatch("batch" + i);
-                detectionReport.setDetectionNumber("number" + i);
-                detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, 1).getDrugcontainer_id()).getName());
-                detectionReport.setUser_id(userid);
-                detectionReport.setUserName(user_id);
-                detectionReport.setDate(new Date());
-                detectionReport.setDetectionCount(0);
-                detectionReport.setUserName("Admin");
-                detectionReport.setDruginfo_id(1);
-                detectionReport.setDrugName(DataSupport.find(DrugInfo.class, 1).getName());
-                detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, 1).getFactory_id()).getName());
-                detectionReport.setDetectionFirstCount(0);
-                detectionReport.setDetectionSecondCount(0);
-                detectionReport.save();
-                detectionReport.clearSavedState();
-            }
-
+        if (!DataSupport.isExist(CameraParams.class)) {
+            CameraParams cameraParams = new CameraParams();
+            cameraParams.setParamName("flashGain");
+            cameraParams.setParamValue(4.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("x_addr_end");
+            cameraParams.setParamValue(1280.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("y_addr_end");
+            cameraParams.setParamValue(768.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("Exposure");
+            cameraParams.setParamValue(4.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("fpgaGain");
+            cameraParams.setParamValue(0.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("globalGain");
+            cameraParams.setParamValue(1.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("digitalGain");
+            cameraParams.setParamValue(86.0);
+            cameraParams.save();
+            cameraParams.clearSavedState();
+            cameraParams.setParamName("fpgaFilter");
+            cameraParams.setParamValue(0.0);
+            cameraParams.save();
         }
-        //测试数据
+
+
         return mBinder;
     }
 
