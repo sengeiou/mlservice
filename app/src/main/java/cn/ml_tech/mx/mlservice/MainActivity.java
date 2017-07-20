@@ -5,7 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
-    TextView textView;
+    static TextView textView;
     MlMotor mlMotor = null;
 
     @Override
@@ -15,6 +15,15 @@ public class MainActivity extends AppCompatActivity {
         textView = (TextView) findViewById(R.id.tv);
         mlMotor = new MlMotor();
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        textView.setText(mlMotor.getCLanguageString());
+        MlMotor.ReportDataVal reportDataVal = new MlMotor.ReportDataVal(2, 1, 0x200, 20000, 4000, 1);
+        mlMotor.motorControl(reportDataVal);
+        //MlMotor.ReportDataReg reportDataReg = new MlMotor.ReportDataReg(0,0,1);
 
     }
 }
