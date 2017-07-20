@@ -23,6 +23,9 @@
     import cn.ml_tech.mx.mlservice.DAO.UserType;
     import cn.ml_tech.mx.mlservice.DAO.User;
     import cn.ml_tech.mx.mlservice.DAO.Modern;
+    import cn.ml_tech.mx.mlservice.DAO.P_Source;
+    import cn.ml_tech.mx.mlservice.DAO.P_Operator;
+    import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -85,5 +88,13 @@
         List<String> getFieldByName(String name);
         Modern getDataByTableName(String tableName);
         void updateData(String tableName,in Modern modern);
-         void deleteData(String tableName,in List<String> id);
+        void deleteData(String tableName,in List<String> id);
+        List<P_Source> getRootP_Source();
+        List<P_Source> getP_SourceByUrl(String url);
+        PermissionHelper getP_OperatorBySourceId(long id);
+        boolean isOperate(long sourceoperateid,long userTypeId);
+        void deletePermission(long sourceoperateid,long userTypeId);
+        void addPermission(long sourceoperateid,long userTypeId);
+        boolean canAddType(String typeName);
+        void addUserType(String typeName,in List<String>sourceoperateId);
    }

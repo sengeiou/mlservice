@@ -1,5 +1,8 @@
 package cn.ml_tech.mx.mlservice.DAO;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
@@ -31,7 +34,8 @@ CREATE TABLE [p_sourceoperator](
 
 */
 
-public class P_SourceOperator extends DataSupport {
+public class P_SourceOperator extends DataSupport implements Parcelable {
+
     @Column(unique = true, nullable = false)
     private long id;
     @Column(nullable = false)
@@ -62,4 +66,37 @@ public class P_SourceOperator extends DataSupport {
     public void setP_operator_id(long p_operator_id) {
         this.p_operator_id = p_operator_id;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeLong(this.id);
+        dest.writeLong(this.p_source_id);
+        dest.writeLong(this.p_operator_id);
+    }
+
+    public P_SourceOperator() {
+    }
+
+    protected P_SourceOperator(Parcel in) {
+        this.id = in.readLong();
+        this.p_source_id = in.readLong();
+        this.p_operator_id = in.readLong();
+    }
+
+    public static final Parcelable.Creator<P_SourceOperator> CREATOR = new Parcelable.Creator<P_SourceOperator>() {
+        @Override
+        public P_SourceOperator createFromParcel(Parcel source) {
+            return new P_SourceOperator(source);
+        }
+
+        @Override
+        public P_SourceOperator[] newArray(int size) {
+            return new P_SourceOperator[size];
+        }
+    };
 }

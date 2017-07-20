@@ -15,6 +15,9 @@ import org.litepal.LitePal;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -37,6 +40,11 @@ import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
 import cn.ml_tech.mx.mlservice.DAO.Modern;
+import cn.ml_tech.mx.mlservice.DAO.P_Operator;
+import cn.ml_tech.mx.mlservice.DAO.P_Source;
+import cn.ml_tech.mx.mlservice.DAO.P_SourceOperator;
+import cn.ml_tech.mx.mlservice.DAO.P_UserTypePermission;
+import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
@@ -61,6 +69,7 @@ public class MotorServices extends Service {
     private long userid;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    private SimpleDateFormat audittraformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private DetectionDetail detectionDetail;
 
     private long reportid;
@@ -87,7 +96,7 @@ public class MotorServices extends Service {
     }
 
     private void log(String message) {
-        Log.v("MotorServices", message);
+        Log.v("zw", message);
     }
 
     @Override
@@ -435,7 +444,7 @@ public class MotorServices extends Service {
             while (c.moveToNext()) {
                 DrugInfo drugInfo = new DrugInfo();
                 drugInfo.setFactory_id(c.getLong(c.getColumnIndex("factory_id")));
-                drugInfo.setDrugcontainer_id(c.getLong(c.getColumnIndex("drugcontainer_id")));
+                drugInfo.setDrugcontainer_id(c.getLong(c.getColumnIndex("drugcontainerid")));
                 drugInfo.setPinyin(c.getString(c.getColumnIndex("pinyin")));
                 drugInfo.setEnname(c.getString(c.getColumnIndex("enname")));
                 drugInfo.setName(c.getString(c.getColumnIndex("name")));
@@ -786,8 +795,14 @@ public class MotorServices extends Service {
 
         @Override
         public void updateUser(User user) throws RemoteException {
-
-            user.saveOrUpdate("id = ?", user.getId() + "");
+            Log.d("zw", "updateUser" + user.getIsEnable() + " 可用？userid " + user.getId());
+            if (user.getId() != 0) {
+                user.saveOrUpdate("id = ?", user.getId() + "");
+            } else {
+                String createdate = format.format(new Date());
+                user.setCreateDate(createdate);
+                user.save();
+            }
         }
 
         @Override
@@ -802,7 +817,15 @@ public class MotorServices extends Service {
 
         @Override
         public void addAudittrail(int event_id, int info_id, String value, String mark) throws RemoteException {
-
+            AuditTrail auditTrail = new AuditTrail();
+            auditTrail.setTime(audittraformat.format(new Date()));
+            auditTrail.setUsername(user_id);
+            auditTrail.setEvent_id(event_id);
+            auditTrail.setInfo_id(info_id);
+            auditTrail.setValue(value);
+            auditTrail.setMark(mark);
+            auditTrail.setUserauto_id(0);
+            auditTrail.save();
         }
 
         @Override
@@ -894,6 +917,112 @@ public class MotorServices extends Service {
                 DataSupport.deleteAll(tableName, "id = ?", id.get(i));
             }
         }
+
+        @Override
+        public List<P_Source> getRootP_Source() throws RemoteException {
+            List<P_Source> p_sources = new ArrayList<>();
+            p_sources = DataSupport.findAll(P_Source.class);
+            for (int i = 0; i < p_sources.size(); i++) {
+                P_Source p_source = p_sources.get(i);
+                if (p_source.getUrl().contains("/")) {
+                    p_sources.remove(i);
+                    i--;
+                }
+            }
+            return p_sources;
+        }
+
+        @Override
+        public List<P_Source> getP_SourceByUrl(String url) throws RemoteException {
+            List<P_Source> p_sources = new ArrayList<>();
+            p_sources = DataSupport.findAll(P_Source.class);
+            for (int i = 0; i < p_sources.size(); i++) {
+                P_Source p_source = p_sources.get(i);
+                if ((!p_source.getUrl().contains(url))) {
+                    p_sources.remove(i);
+                    i--;
+                }
+            }
+            for (P_Source source :
+                    p_sources) {
+            }
+            return p_sources;
+        }
+
+        @Override
+        public PermissionHelper getP_OperatorBySourceId(long id) throws RemoteException {
+            PermissionHelper permissionHelper = new PermissionHelper();
+            Map<Long, P_Operator> pOperatorMap = new HashMap<>();
+            List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", id + "").find(P_SourceOperator.class);
+            for (P_SourceOperator p_sourceOperator :
+                    p_sourceOperators) {
+                P_Operator p_operator = DataSupport.find(P_Operator.class, p_sourceOperator.getP_operator_id());
+                pOperatorMap.put(p_sourceOperator.getId(), p_operator);
+            }
+            permissionHelper.setP_operatorMap(pOperatorMap);
+            return permissionHelper;
+        }
+
+        /**
+         * @param sourceoperateid
+         * @param userid
+         * @return
+         * @throws RemoteException
+         */
+        @Override
+        public boolean isOperate(long sourceoperateid, long userTypeId) throws RemoteException {
+            Log.d("zw", "sourceoperateid " + sourceoperateid + " userTypeId" + userTypeId);
+            List<P_UserTypePermission> p_userPermissions = DataSupport.where("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "").find(P_UserTypePermission.class);
+            if (p_userPermissions.size() == 0) {
+                return false;
+            } else {
+                if (p_userPermissions.get(0).getRighttype() == 1) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+        }
+
+        @Override
+        public void deletePermission(long sourceoperateid, long userTypeId) throws RemoteException {
+            Log.d("zw", "deletePermission sourceoperateid " + sourceoperateid + " typeId " + userTypeId);
+            DataSupport.deleteAll(P_UserTypePermission.class, "p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
+
+        }
+
+        @Override
+        public void addPermission(long sourceoperateid, long userTypeId) throws RemoteException {
+            P_UserTypePermission p_userTypePermission = new P_UserTypePermission();
+            p_userTypePermission.setP_sourceoperator_id(sourceoperateid);
+            p_userTypePermission.setUsertype(userTypeId);
+            p_userTypePermission.setRighttype(1);
+            p_userTypePermission.saveOrUpdate("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
+        }
+
+        @Override
+        public boolean canAddType(String typeName) throws RemoteException {
+            List<UserType> userTypes = DataSupport.where("typeName = ?", typeName.trim()).find(UserType.class);
+            return
+                    userTypes.isEmpty();
+        }
+
+        @Override
+        public void addUserType(String typeName, List<String> sourceoperateId) throws RemoteException {
+            UserType userType = new UserType();
+            userType.setTypeName(typeName);
+            userType.setTypeId(DataSupport.findLast(UserType.class).getTypeId() + 1);
+            userType.save();
+            long typeId = userType.getTypeId();
+            for (String soid :
+                    sourceoperateId) {
+                long id = Long.parseLong(soid);
+                MotorServices.this.addPermission(id, typeId);
+            }
+        }
+
+
     };
 
     @Override
@@ -1178,9 +1307,39 @@ public class MotorServices extends Service {
             cameraParams.setParamValue(0.0);
             cameraParams.save();
         }
+        if (!DataSupport.isExist(P_Operator.class)) {
+            SQLiteDatabase sqLiteDatabase = LitePal.getDatabase();
+            String path = "data.txt";
+            executeAssetsSQL(sqLiteDatabase, path);
 
-
+        }
         return mBinder;
+    }
+
+    private void executeAssetsSQL(SQLiteDatabase db, String schemaName) {
+        BufferedReader in = null;
+        try {
+            in = new BufferedReader(new InputStreamReader(getAssets()
+                    .open(schemaName)));
+            String line;
+            String buffer = "";
+            while ((line = in.readLine()) != null) {
+                buffer += line;
+                if (line.trim().endsWith(";")) {
+                    db.execSQL(buffer.replace(";", ""));
+                    buffer = "";
+                }
+            }
+        } catch (IOException e) {
+            Log.e("db-error", e.toString());
+        } finally {
+            try {
+                if (in != null)
+                    in.close();
+            } catch (IOException e) {
+                Log.e("db-error", e.toString());
+            }
+        }
     }
 
     public void saveCheckDate() {
@@ -1347,5 +1506,13 @@ public class MotorServices extends Service {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    public void addPermission(long sourceoperateid, long userTypeId) throws RemoteException {
+        P_UserTypePermission p_userTypePermission = new P_UserTypePermission();
+        p_userTypePermission.setP_sourceoperator_id(sourceoperateid);
+        p_userTypePermission.setUsertype(userTypeId);
+        p_userTypePermission.setRighttype(1);
+        p_userTypePermission.saveOrUpdate("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
     }
 }

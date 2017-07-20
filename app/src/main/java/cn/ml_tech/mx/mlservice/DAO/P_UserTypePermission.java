@@ -35,16 +35,13 @@ public class P_UserTypePermission extends DataSupport {
     private long id;
     @Column(nullable = false)
     private int righttype;
-
     @Column(nullable = false)
     private long usertype;
     @Column(nullable = false)
     private long p_sourceoperator_id;
-
     public long getId() {
         return id;
     }
-
     public void setId(long id) {
         this.id = id;
     }

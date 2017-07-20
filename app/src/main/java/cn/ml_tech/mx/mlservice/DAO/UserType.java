@@ -1,8 +1,6 @@
 package cn.ml_tech.mx.mlservice.DAO;
-
 import android.os.Parcel;
 import android.os.Parcelable;
-
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
 
