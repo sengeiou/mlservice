@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -40,10 +41,12 @@ import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
 import cn.ml_tech.mx.mlservice.DAO.Modern;
+import cn.ml_tech.mx.mlservice.DAO.P_Module;
 import cn.ml_tech.mx.mlservice.DAO.P_Operator;
 import cn.ml_tech.mx.mlservice.DAO.P_Source;
 import cn.ml_tech.mx.mlservice.DAO.P_SourceOperator;
 import cn.ml_tech.mx.mlservice.DAO.P_UserTypePermission;
+import cn.ml_tech.mx.mlservice.DAO.Permission;
 import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
@@ -71,7 +74,7 @@ public class MotorServices extends Service {
     private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     private SimpleDateFormat audittraformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private DetectionDetail detectionDetail;
-
+    private long typeId;
     private long reportid;
     private DetectionReport detectionReport;
 
@@ -112,22 +115,12 @@ public class MotorServices extends Service {
             log("Received addMotorControl.");
         }
 
-        /**
-         * 设置检测对象相关参数
-         * @param bottlepara
-         * @throws RemoteException
-         */
         @Override
         public void saveBottlePara(BottlePara bottlepara) throws RemoteException {
             //之后的代码有待完成
         }
 
-        /**
-         * @param name
-         * @param password
-         * @return
-         * @throws RemoteException
-         */
+
         @Override
         public boolean checkAuthority(String name, String password) throws RemoteException {
             log(name);
@@ -137,20 +130,48 @@ public class MotorServices extends Service {
             if (users.size() != 0) {
                 user_id = users.get(0).getUserId();
                 userid = users.get(0).getId();
+                typeId = users.get(0).getUsertype_id();
+                Log.d("zw", "typeId " + typeId);
             }
             return users.size() == 0 ? false : true;
         }
 
-        /**
-         * @param name
-         * @param enName
-         * @param pinYin
-         * @param containterId
-         * @param factoryId
-         * @param id
-         * @return
-         * @throws RemoteException
-         */
+        @Override
+        public void startCalibration() throws RemoteException {
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    for (int i = 0; i < 7; i++) {
+                        try {
+                            Thread.sleep(2000);
+                            intent = new Intent();
+                            intent.setAction("com.calibration");
+                            intent.putExtra("state", i);
+                            if (i == 5) {
+                                intent.putExtra("standard40", "4.82px");
+                                intent.putExtra("standard50", "4.82px");
+                                intent.putExtra("standard60", "4.82px");
+                                intent.putExtra("variance40", "3.29");
+                                intent.putExtra("variance60", "18.29");
+                                intent.putExtra("statime", "0.00s");
+                                intent.putExtra("stotime", "0.00s");
+                                intent.putExtra("stpstate", "normal");
+                                intent.putExtra("stostate", "normal");
+                                intent.putExtra("colorcoefficient", "18.29");
+
+
+                            }
+                            sendBroadcast(intent);
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }.start();
+        }
+
         @Override
         public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId, String id) throws RemoteException {
             DrugInfo drugInfo = new DrugInfo();
@@ -173,7 +194,7 @@ public class MotorServices extends Service {
 
         @Override
         public boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code) throws RemoteException {
-            Log.d("ZW", name + address + phone);
+
             Factory factory = new Factory();
             factory.setName(name);
             factory.setAddress(address);
@@ -194,7 +215,7 @@ public class MotorServices extends Service {
             List<FactoryControls> factoryControlses = new ArrayList<>();
             List<Factory> factories = findAll(Factory.class);
             for (Factory factory : factories) {
-                Log.d("ZW", factory.getCity_code());
+
                 FactoryControls factoryControls = new FactoryControls();
                 factoryControls.setId(factory.getId());
                 factoryControls.setName(factory.getName());
@@ -812,6 +833,7 @@ public class MotorServices extends Service {
 
         @Override
         public void deleteUserById(long id) throws RemoteException {
+            Log.d("zw", "service delete user " + id);
             DataSupport.delete(User.class, id);
         }
 
@@ -864,7 +886,6 @@ public class MotorServices extends Service {
                 List<String> data = new ArrayList<>();
                 for (int itme = 0; itme < field.size(); itme++) {
                     data.add(cursor.getString(cursor.getColumnIndex(field.get(itme))));
-                    Log.d("zw", data.size() + " data.size()");
                 }
                 dataMap.put(i, data);
                 Log.d("zw", " i = " + i);
@@ -943,19 +964,18 @@ public class MotorServices extends Service {
                     i--;
                 }
             }
-            for (P_Source source :
-                    p_sources) {
-            }
+
             return p_sources;
         }
 
         @Override
         public PermissionHelper getP_OperatorBySourceId(long id) throws RemoteException {
             PermissionHelper permissionHelper = new PermissionHelper();
-            Map<Long, P_Operator> pOperatorMap = new HashMap<>();
-            List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", id + "").find(P_SourceOperator.class);
+            LinkedHashMap<Long, P_Operator> pOperatorMap = new LinkedHashMap<>();
+            List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", id + "").order("id asc").find(P_SourceOperator.class);
             for (P_SourceOperator p_sourceOperator :
                     p_sourceOperators) {
+                Log.d("zw", "service sourceoperateid " + p_sourceOperator.getId());
                 P_Operator p_operator = DataSupport.find(P_Operator.class, p_sourceOperator.getP_operator_id());
                 pOperatorMap.put(p_sourceOperator.getId(), p_operator);
             }
@@ -963,15 +983,8 @@ public class MotorServices extends Service {
             return permissionHelper;
         }
 
-        /**
-         * @param sourceoperateid
-         * @param userid
-         * @return
-         * @throws RemoteException
-         */
         @Override
         public boolean isOperate(long sourceoperateid, long userTypeId) throws RemoteException {
-            Log.d("zw", "sourceoperateid " + sourceoperateid + " userTypeId" + userTypeId);
             List<P_UserTypePermission> p_userPermissions = DataSupport.where("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "").find(P_UserTypePermission.class);
             if (p_userPermissions.size() == 0) {
                 return false;
@@ -1004,8 +1017,7 @@ public class MotorServices extends Service {
         @Override
         public boolean canAddType(String typeName) throws RemoteException {
             List<UserType> userTypes = DataSupport.where("typeName = ?", typeName.trim()).find(UserType.class);
-            return
-                    userTypes.isEmpty();
+            return userTypes.isEmpty();
         }
 
         @Override
@@ -1020,6 +1032,57 @@ public class MotorServices extends Service {
                 long id = Long.parseLong(soid);
                 MotorServices.this.addPermission(id, typeId);
             }
+        }
+
+        @Override
+        public Permission getPermissonByUrl(String url, boolean isRoot) throws RemoteException {
+            Permission permission = new Permission();
+            LinkedHashMap<String, Boolean> linkedHashMap = new LinkedHashMap<>();
+            List<P_Source> p_sources = new ArrayList<>();
+            p_sources = DataSupport.findAll(P_Source.class);
+            for (int i = 0; i < p_sources.size(); i++) {
+                P_Source p_source = p_sources.get(i);
+                if (isRoot) {
+                    if (p_source.getUrl().contains("/")) {
+                        p_sources.remove(i);
+                        i--;
+                    }
+                } else {
+                    if (!p_source.getUrl().contains(url + "/")) {
+                        p_sources.remove(i);
+                        i--;
+                    }
+                }
+            }
+            for (P_Source p_source : p_sources
+                    ) {
+                List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", p_source.getId() + "").find(P_SourceOperator.class);
+                for (P_SourceOperator sourceOperator : p_sourceOperators
+                        ) {
+                    List<P_Operator> p_operators = DataSupport.
+                            where("id = ?", sourceOperator.getP_operator_id() + "").find(P_Operator.class);
+                    List<P_UserTypePermission> p_userTypePermissions = DataSupport.where("p_sourceoperator_id = ? and usertype = ?", sourceOperator.getId() + "", typeId + "").find(P_UserTypePermission.class);
+                    linkedHashMap.put(p_source.getTitle() + p_operators.get(0).getTitle(), !p_userTypePermissions.isEmpty());
+                    Log.d("zw", p_source.getTitle() + " " + p_operators.get(0).getTitle() + " " + !p_userTypePermissions.isEmpty());
+
+                }
+            }
+            permission.setPermissiondata(linkedHashMap);
+            return permission;
+        }
+
+        @Override
+        public List<P_Source> getAllP_Source() throws RemoteException {
+            List<P_Source> p_sources = new ArrayList<>();
+            p_sources = DataSupport.findAll(P_Source.class);
+            return p_sources;
+        }
+
+        @Override
+        public List<P_Operator> getAllP_Operator() throws RemoteException {
+            List<P_Operator> p_operators = new ArrayList<>();
+            p_operators = DataSupport.findAll(P_Operator.class);
+            return p_operators;
         }
 
 
@@ -1250,7 +1313,6 @@ public class MotorServices extends Service {
             Factory factory = new Factory();
             factory.setAddress("asdfgh");
             factory.setName("湖南药厂");
-
             factory.save();
         }
         if (!DataSupport.isExist(AuditTrail.class)) {
@@ -1312,6 +1374,24 @@ public class MotorServices extends Service {
             String path = "data.txt";
             executeAssetsSQL(sqLiteDatabase, path);
 
+        }
+        if (!DataSupport.isExist(P_Module.class)) {
+            P_Module p_module = new P_Module();
+            p_module.setTitle("仪器参数标定");
+            p_module.setUrl("btnStdDrugDecetion");
+            p_module.save();
+            p_module.clearSavedState();
+            p_module.setTitle("样品检测");
+            p_module.setUrl("btnDrugDecetion");
+            p_module.save();
+            p_module.clearSavedState();
+            p_module.setUrl("btnResultDetail");
+            p_module.setTitle("检测数据查询");
+            p_module.save();
+            p_module.clearSavedState();
+            p_module.setTitle("系统参数维护");
+            p_module.setUrl("btnSystemSetUp");
+            p_module.save();
         }
         return mBinder;
     }

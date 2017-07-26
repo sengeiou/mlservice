@@ -26,6 +26,7 @@
     import cn.ml_tech.mx.mlservice.DAO.P_Source;
     import cn.ml_tech.mx.mlservice.DAO.P_Operator;
     import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
+    import cn.ml_tech.mx.mlservice.DAO.Permission;
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -34,6 +35,7 @@
          */
         void addMotorControl(in MotorControl mControl);
         boolean checkAuthority(String name, String password);
+        void startCalibration();
         boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId,String id);
         boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code);
         List<DrugControls> queryDrugControl();
@@ -97,4 +99,9 @@
         void addPermission(long sourceoperateid,long userTypeId);
         boolean canAddType(String typeName);
         void addUserType(String typeName,in List<String>sourceoperateId);
+        Permission getPermissonByUrl(String title,boolean isRoot);
+        List<P_Source> getAllP_Source();
+        List<P_Operator> getAllP_Operator();
+
+
    }
