@@ -22,9 +22,7 @@ public class SerialPort {
     private FileDescriptor mFd;
     private FileInputStream mFileInputStream;
     private FileOutputStream mFileOutputStream;
-
     public SerialPort(File device, int baudrate, int flags) throws SecurityException, IOException {
-
 		/* Check access permission */
         if (!device.canRead() || !device.canWrite()) {
             try {

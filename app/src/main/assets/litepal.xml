@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <litepal>
     <dbname value="AmiArm" />
-    <version value="3" />
+    <version value="4" />
     <list>
         <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrail" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType" />
@@ -37,5 +37,6 @@
         <mapping class="cn.ml_tech.mx.mlservice.DAO.UserType" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.WorkFlow" />
         <mapping class="cn.ml_tech.mx.mlservice.DAO.SpecificationType" />
+        <mapping class="cn.ml_tech.mx.mlservice.DAO.DevDynamicParams"/>
     </list>
 </litepal>

@@ -13,8 +13,6 @@ import org.litepal.crud.DataSupport;
 CREATE TABLE [specificationtype](
     [id] integer PRIMARY KEY AUTOINCREMENT,
     [name] text NOT NULL);
-
-
 */
 
 public class SpecificationType extends DataSupport {

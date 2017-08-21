@@ -1,8 +1,6 @@
 package cn.ml_tech.mx.mlservice;
-
 import android.os.Parcel;
 import android.os.Parcelable;
-
 /**
  * CREATE TABLE factory
  * (
@@ -36,13 +34,8 @@ CREATE TABLE [factory](
     [province_code] text DEFAULT 'null',
     [website] text,
     [user_id] integer);
-
-
 */
-
 public class FactoryControls implements Parcelable {
-
-
     private int id;
     private String name;
     private String address;

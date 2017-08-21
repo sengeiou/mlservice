@@ -1,5 +1,4 @@
 package cn.ml_tech.mx.mlservice;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -10,7 +9,6 @@ import android.os.Parcelable;
  */
 
 public class SpecificationType implements Parcelable {
-
     private long id;
     private String name;
 

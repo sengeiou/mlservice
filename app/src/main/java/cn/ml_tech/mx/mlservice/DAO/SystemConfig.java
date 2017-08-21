@@ -28,8 +28,6 @@ CREATE TABLE [systemconfig](
     [id] integer PRIMARY KEY AUTOINCREMENT,
     [paramname] text NOT NULL UNIQUE,
     [paramvalue] real NOT NULL);
-
-
 */
 
 public class SystemConfig extends DataSupport implements Parcelable {

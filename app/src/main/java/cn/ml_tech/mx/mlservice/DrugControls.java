@@ -79,12 +79,9 @@ public class DrugControls implements Parcelable {
         this.pinyin = pinyin;
         this.enname = enname;
     }
-
-
     /**
      * Created by ml on 2017/4/28.
      */
-
     public static class User implements Parcelable {
         private int userLogicId;
         private String userName;

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cn.ml_tech.mx.mlservice">
-    <instrumentation
-        android:name="android.test.InstrumentationTestRunner"
-        android:label="niemi"
-        android:targetPackage="cn.ml_tech.mx.mlservice" >
-    </instrumentation>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission-sdk-23 android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name="org.litepal.LitePalApplication"

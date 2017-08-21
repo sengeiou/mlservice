@@ -1,11 +1,9 @@
 package cn.ml_tech.mx.mlservice.DAO;
-
 import android.os.Parcel;
 import android.os.Parcelable;
 
 import org.litepal.annotation.Column;
 import org.litepal.crud.DataSupport;
-
 /**
  * CREATE TABLE drugContainer
  (
@@ -29,8 +27,6 @@ import org.litepal.crud.DataSupport;
  foreign key (trayID) REFERENCES tray(id)
  );
  */
-
-
 public class DevParam extends DataSupport implements Parcelable {
     @Column(unique = true,nullable = false)
     private  long id;

@@ -34,12 +34,14 @@ import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
 import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 import cn.ml_tech.mx.mlservice.DAO.DetectionDetail;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
+import cn.ml_tech.mx.mlservice.DAO.DevDynamicParams;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugContainer;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
+import cn.ml_tech.mx.mlservice.DAO.LoginLog;
 import cn.ml_tech.mx.mlservice.DAO.Modern;
 import cn.ml_tech.mx.mlservice.DAO.P_Module;
 import cn.ml_tech.mx.mlservice.DAO.P_Operator;
@@ -61,7 +63,6 @@ import static org.litepal.crud.DataSupport.find;
 import static org.litepal.crud.DataSupport.findAll;
 import static org.litepal.crud.DataSupport.findBySQL;
 import static org.litepal.crud.DataSupport.where;
-
 
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
@@ -120,7 +121,6 @@ public class MotorServices extends Service {
             //之后的代码有待完成
         }
 
-
         @Override
         public boolean checkAuthority(String name, String password) throws RemoteException {
             log(name);
@@ -133,6 +133,12 @@ public class MotorServices extends Service {
                 typeId = users.get(0).getUsertype_id();
                 Log.d("zw", "typeId " + typeId);
             }
+
+                    LoginLog loginLog = new LoginLog();
+                    loginLog.setUser_id(userid);
+                    loginLog.setLoginDateTime(new Date());
+                    loginLog.save();
+
             return users.size() == 0 ? false : true;
         }
 
@@ -142,7 +148,7 @@ public class MotorServices extends Service {
                 @Override
                 public void run() {
                     super.run();
-                    for (int i = 0; i < 7; i++) {
+                    for (int i = 0; i < 8; i++) {
                         try {
                             Thread.sleep(2000);
                             intent = new Intent();
@@ -159,8 +165,6 @@ public class MotorServices extends Service {
                                 intent.putExtra("stpstate", "normal");
                                 intent.putExtra("stostate", "normal");
                                 intent.putExtra("colorcoefficient", "18.29");
-
-
                             }
                             sendBroadcast(intent);
 
@@ -215,7 +219,6 @@ public class MotorServices extends Service {
             List<FactoryControls> factoryControlses = new ArrayList<>();
             List<Factory> factories = findAll(Factory.class);
             for (Factory factory : factories) {
-
                 FactoryControls factoryControls = new FactoryControls();
                 factoryControls.setId(factory.getId());
                 factoryControls.setName(factory.getName());
@@ -234,14 +237,10 @@ public class MotorServices extends Service {
         }
 
 
-        /**
-         * @return
-         * @throws RemoteException
-         */
         @Override
         public List<DrugControls> queryDrugControl() throws RemoteException {
             mDrugControls.clear();
-            List<DrugInfo> mDrugInfo = DataSupport.findAll(DrugInfo.class);
+            List<DrugInfo> mDrugInfo = DataSupport.order("id desc").find(DrugInfo.class);
 
             for (int i = 0; i < mDrugInfo.size(); i++) {
                 log(mDrugInfo.get(i).toString());
@@ -451,40 +450,22 @@ public class MotorServices extends Service {
         @Override
         public List<DrugControls> queryDrugControlByInfo(String drugname, String pinyin, String enname, int page) throws RemoteException {
             mDrugControls.clear();
-            List<DrugInfo> drugInfos = new ArrayList<>();
+            List<DrugInfo> mDrugInfo = new ArrayList<>();
             log("page" + page);
-            Cursor c = null;
-            c = findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ?"
-                    , drugname + "%", enname + "%", pinyin + "%");
+            mDrugInfo = DataSupport.where("name like ? and enname like ? and pinyin like ?", drugname + "%", enname + "%", pinyin + "%").order("id desc").find(DrugInfo.class);
             if (page != -1) {
-                c = findBySQL("select * from druginfo where name like ? and enname like ? and pinyin like ? limit 20 offset " + (page - 1) * 20
-                        , drugname + "%", enname + "%", pinyin + "%");
-
+                mDrugInfo = DataSupport.where("name like ? and enname like ? and pinyin like ?", drugname + "%", enname + "%", pinyin + "%").limit(20).offset((page - 1) * 20).order("id desc").find(DrugInfo.class);
             }
-
-            while (c.moveToNext()) {
-                DrugInfo drugInfo = new DrugInfo();
-                drugInfo.setFactory_id(c.getLong(c.getColumnIndex("factory_id")));
-                drugInfo.setDrugcontainer_id(c.getLong(c.getColumnIndex("drugcontainerid")));
-                drugInfo.setPinyin(c.getString(c.getColumnIndex("pinyin")));
-                drugInfo.setEnname(c.getString(c.getColumnIndex("enname")));
-                drugInfo.setName(c.getString(c.getColumnIndex("name")));
-                drugInfo.setId(c.getLong(c.getColumnIndex("id")));
-                drugInfos.add(drugInfo);
-                log(drugInfo.toString());
-            }
-            log(drugInfos.size() + "size");
-            for (int i = 0; i < drugInfos.size(); i++) {
-                log(drugInfos.get(i).toString());
-                List<DrugContainer> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(drugInfos.get(i).getDrugcontainer_id())).find(DrugContainer.class);
+            for (int i = 0; i < mDrugInfo.size(); i++) {
+                log(mDrugInfo.get(i).toString());
+                List<DrugContainer> list = DataSupport.select(new String[]{"id", "name"}).where("id=?", String.valueOf(mDrugInfo.get(i).getDrugcontainer_id())).find(DrugContainer.class);
                 String drugBottleType = list.get(0).getName();
-                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(drugInfos.get(i).getFactory_id())).find(Factory.class);
+                List<Factory> lists = DataSupport.select(new String[]{"*"}).where("id=?", String.valueOf(mDrugInfo.get(i).getFactory_id())).find(Factory.class);
                 String factory_name = lists.get(0).getName();
-                DrugControls drugControls = new DrugControls(drugInfos.get(i).getName(), drugBottleType, factory_name, drugInfos.get(i).getPinyin()
-                        , drugInfos.get(i).getEnname(), drugInfos.get(i).getId());
+                DrugControls drugControls = new DrugControls(mDrugInfo.get(i).getName(), drugBottleType, factory_name, mDrugInfo.get(i).getPinyin()
+                        , mDrugInfo.get(i).getEnname(), mDrugInfo.get(i).getId());
                 mDrugControls.add(drugControls);
             }
-            log("query" + mDrugControls.size());
             return mDrugControls;
         }
 
@@ -551,13 +532,14 @@ public class MotorServices extends Service {
         public List<DetectionReport> queryDetectionReport(String detectionSn, String drugInfo, String factoryName, String detectionNumber, String detectionBatch, String startTime, String stopTime, int page) throws RemoteException {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             long start = 0, end = 0, current = 0;
-
+//            Log.d("zw", "detectionSn " + detectionSn + " drugInfo " + drugInfo + " factoryName " + factoryName + " detectionNumber " + detectionNumber + " detectionBatch " + detectionBatch + " startTime " + startTime + " stopTime " + stopTime);
             List<DetectionReport> detectionReports = new ArrayList<>();
             detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and drugBottleType = ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber.trim(), detectionBatch + "%").find(DetectionReport.class);
             if (page != -1) {
                 detectionReports = DataSupport.where("drugName like ? and factoryName like ? and detectionSn like ? and drugBottleType = ? and detectionBatch like ?", drugInfo + "%", factoryName + "%", detectionSn + "%", detectionNumber.trim(), detectionBatch + "%").limit(20).offset(((page - 1) * 20)).find(DetectionReport.class);
 
             }
+//            Log.d("zw", "detectionReports size " + detectionReports.size());
             try {
                 for (int i = 0; i < detectionReports.size(); i++) {
                     DetectionReport detectionReport = detectionReports.get(i);
@@ -662,8 +644,10 @@ public class MotorServices extends Service {
             Log.d("zw", drug_id + "check " + checkNum + "rotateNum " + rotateNum + "detectionBatch " + detectionBatch + isFirst);
             if (detectionSn.equals("")) {
                 if (isFirst) {
+                    String sn = getDetectionSn();
+                    MotorServices.this.addAudittrail(1, 1, sn, "Save the new information");
                     detectionReport = new DetectionReport();
-                    detectionReport.setDetectionSn(getDetectionSn());
+                    detectionReport.setDetectionSn(sn);
                     detectionReport.setDetectionBatch(detectionBatch);
                     detectionReport.setDetectionNumber(detectionNumber);
                     detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, drug_id).getDrugcontainer_id()).getName());
@@ -774,7 +758,7 @@ public class MotorServices extends Service {
         @Override
         public List<DetectionDetail> queryDetectionDetailByReportId(long id) throws RemoteException {
             List<DetectionDetail> detectionDetails = new ArrayList<>();
-            detectionDetails = DataSupport.where("detectionreport_id = ?", id + "").find(DetectionDetail.class);
+            detectionDetails = DataSupport.where("detectionreport_id = ?", id + "").order("id asc").find(DetectionDetail.class);
             Log.d("zw", detectionDetails.size() + "size");
             return detectionDetails;
         }
@@ -805,8 +789,12 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<DetectionReport> getAllDetectionReports() throws RemoteException {
-            return DataSupport.findAll(DetectionReport.class);
+        public List<DetectionReport> getAllDetectionReports(boolean isSelf) throws RemoteException {
+            if (!isSelf) {
+                return DataSupport.findAll(DetectionReport.class);
+            } else {
+                return DataSupport.where("user_id = ?", userid + "").find(DetectionReport.class);
+            }
         }
 
         @Override
@@ -816,7 +804,6 @@ public class MotorServices extends Service {
 
         @Override
         public void updateUser(User user) throws RemoteException {
-            Log.d("zw", "updateUser" + user.getIsEnable() + " 可用？userid " + user.getId());
             if (user.getId() != 0) {
                 user.saveOrUpdate("id = ?", user.getId() + "");
             } else {
@@ -824,6 +811,8 @@ public class MotorServices extends Service {
                 user.setCreateDate(createdate);
                 user.save();
             }
+            if (DataSupport.find(User.class, userid) != null)
+                typeId = DataSupport.find(User.class, userid).getUsertype_id();
         }
 
         @Override
@@ -1085,17 +1074,100 @@ public class MotorServices extends Service {
             return p_operators;
         }
 
+        @Override
+        public List<DevParam> getDevParamByType(int type) throws RemoteException {
+            List<DevParam> devParams = new ArrayList<>();
+            devParams = DataSupport.where("type = ?", type + "").find(DevParam.class);
+            return devParams;
+        }
+
+        @Override
+        public void saveDevParam(List<DevParam> devParams) throws RemoteException {
+            for (DevParam devParam :
+                    devParams) {
+                if (devParam.getId() == 0)
+                    devParam.save();
+                else
+                    devParam.update(devParam.getId());
+            }
+        }
+
+        @Override
+        public void saveDetectionReport(DetectionReport detectionReport) throws RemoteException {
+            detectionReport.update(detectionReport.getId());
+            Log.d("zw", "detectionReport id " + detectionReport.getId());
+        }
+
+        @Override
+        public void deleteDevParamByIds(List<String> ids) throws RemoteException {
+            for (String s :
+                    ids) {
+                DataSupport.delete(DevParam.class, Long.parseLong(s));
+            }
+        }
+
+        @Override
+        public void backUpDevParam() throws RemoteException {
+            List<DevParam> devParams = DataSupport.findAll(DevParam.class);
+            DataSupport.deleteAll(DevDynamicParams.class, "1=1");
+            DevDynamicParams devDynamicParams = new DevDynamicParams();
+            for (DevParam devParam :
+                    devParams) {
+                devDynamicParams.setId(devParam.getId());
+                devDynamicParams.setParamName(devParam.getParamName());
+                devDynamicParams.setParamValue(devParam.getParamValue());
+                devDynamicParams.setType(devParam.getType());
+                devDynamicParams.save();
+                devDynamicParams.clearSavedState();
+            }
+        }
+
+        @Override
+        public void recoveryParam() throws RemoteException {
+            List<DevDynamicParams> devParams = DataSupport.findAll(DevDynamicParams.class);
+            DataSupport.deleteAll(DevParam.class, "1=1");
+            DevParam devDynamicParams = new DevParam();
+            for (DevDynamicParams devParam :
+                    devParams) {
+                devDynamicParams.setId(devParam.getId());
+                devDynamicParams.setParamName(devParam.getParamName());
+                devDynamicParams.setParamValue(devParam.getParamValue());
+                devDynamicParams.setType(devParam.getType());
+                devDynamicParams.save();
+                devDynamicParams.clearSavedState();
+            }
+        }
+
+        @Override
+        public long getUserId() throws RemoteException {
+            return userid;
+        }
+
+        @Override
+        public long geTypeId() throws RemoteException {
+            Log.d("Zb", "service TypeId " + typeId);
+            return typeId;
+        }
+
+        @Override
+        public void deleteDetectionReportsById(List<String> ids) throws RemoteException {
+            for (String id :
+                    ids) {
+                Log.d("zw", "ddetectionReport id " + id);
+                DataSupport.delete(DetectionReport.class, Long.parseLong(id.trim()));
+                DataSupport.deleteAll(DetectionDetail.class, "detectionreport_id = ?", id);
+
+            }
+        }
 
     };
 
     @Override
     public IBinder onBind(Intent intent) {
-        log("Received binding.");
         alertDialog = new AlertDialog();
         alertDialog.setContext(this);
         log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
-
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
             userType.setTypeId(0);
@@ -1121,11 +1193,11 @@ public class MotorServices extends Service {
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
             user.clearSavedState();
-            user.setUsertype_id(2);
-            user.setUserId("Zw1025");
+            user.setUsertype_id(0);
+            user.setUserId("zw1025");
             user.setIsEnable(1);
-            user.setUserName("Zw1025");
-            user.setUserPassword("Zw1025");
+            user.setUserName("zw1025");
+            user.setUserPassword("zw1025");
             user.setCreateDate(simpleDateFormat.format(new Date()));
             user.save();
         }
@@ -1204,14 +1276,14 @@ public class MotorServices extends Service {
                 drugContainer.clearSavedState();
                 drugContainer.setName("安瓿瓶2ml");
                 drugContainer.setDiameter(0);
-                drugContainer.setTray_id(9);
-                drugContainer.setSrctime(5.0);
-                drugContainer.setStptime(3.0);
-                drugContainer.setChannelvalue1(50);
-                drugContainer.setChannelvalue2(2.5);
-                drugContainer.setChannelvalue3(1.5);
-                drugContainer.setChannelvalue4(2.7);
-                drugContainer.setShadeparam(18.0);
+                drugContainer.setTray_id(2);
+                drugContainer.setSrctime(2.0);
+                drugContainer.setStptime(2.0);
+                drugContainer.setChannelvalue1(20);
+                drugContainer.setChannelvalue2(2.2);
+                drugContainer.setChannelvalue3(1.2);
+                drugContainer.setChannelvalue4(2.2);
+                drugContainer.setShadeparam(2.0);
                 drugContainer.setRotatespeed(4500);
                 drugContainer.setSendparam(2.0);
                 drugContainer.setDelaytime(0.12);
@@ -1315,15 +1387,7 @@ public class MotorServices extends Service {
             factory.setName("湖南药厂");
             factory.save();
         }
-        if (!DataSupport.isExist(AuditTrail.class)) {
-            AuditTrail auditTrail = new AuditTrail();
-            auditTrail.setEvent_id(1);
-            auditTrail.setId(1);
-            auditTrail.setTime("2017-07-15");
-            auditTrail.setUsername("admin");
-            auditTrail.setValue("Login Sucess");
-            auditTrail.save();
-        }
+
         if (!DataSupport.isExist(DevUuid.class)) {
             DevUuid devUuid = new DevUuid();
             devUuid.setUserAbbreviation("admin");
@@ -1488,12 +1552,8 @@ public class MotorServices extends Service {
      * @throws JSONException
      */
     public synchronized void simulatieDate(int i, int checkNum, boolean isFirst, long reportid, String detectionSn) throws JSONException {
-
-        Log.d("zw", "in " + reportid);
-
         DetectionDetail detectionDetail = new DetectionDetail();
         detectionDetail.setDetectionreport_id(reportid);
-
         detectionDetail.setPositive(i % 2 == 0 ? true : false);
         detectionDetail.setColorFactor(150);
         detectionDetail.setScrTime(4.0);
@@ -1528,10 +1588,8 @@ public class MotorServices extends Service {
             } else {
                 intent.putExtra("state", "secondfinish");
             }
-
         } else {
             intent.putExtra("state", "process");
-
         }
         sendBroadcast(intent);
     }
@@ -1553,7 +1611,7 @@ public class MotorServices extends Service {
             floatdata.put("result", "阴性");
             glassprecent.put("name", "速降物检出率(%)");
             glassprecent.put("data", 0);
-            glassprecent.put("result", "阴性");
+            glassprecent.put("result", "阳性");
             glasstime.put("name", "速降物时间比例(%)");
             glasstime.put("data", 1.62);
             max.put("name", "50-70um异物检出数(颗)");
@@ -1594,5 +1652,17 @@ public class MotorServices extends Service {
         p_userTypePermission.setUsertype(userTypeId);
         p_userTypePermission.setRighttype(1);
         p_userTypePermission.saveOrUpdate("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
+    }
+
+    public void addAudittrail(int event_id, int info_id, String value, String mark) throws RemoteException {
+        AuditTrail auditTrail = new AuditTrail();
+        auditTrail.setTime(audittraformat.format(new Date()));
+        auditTrail.setUsername(user_id);
+        auditTrail.setEvent_id(event_id);
+        auditTrail.setInfo_id(info_id);
+        auditTrail.setValue(value);
+        auditTrail.setMark(mark);
+        auditTrail.setUserauto_id(0);
+        auditTrail.save();
     }
 }
