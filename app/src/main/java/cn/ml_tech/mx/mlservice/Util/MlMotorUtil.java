@@ -20,11 +20,7 @@ public class MlMotorUtil {
         reportDataVal.setDir(dir);
         reportDataVal.setAcc_time((int) ((distance / avgspeed) / 2));
         reportDataVal.setU16WaveNum((int) (distance / WAVEPERMM));
-        reportDataVal.setSpeed(0x200);
-        if (type == CommonUtil.Device_OutPut)
-            reportDataVal.setSpeed(0x250);
-        if (type == CommonUtil.Device_Rotate)
-            reportDataVal.setSpeed(0x300);
+        reportDataVal.setSpeed((int) (((6350) / ((avgspeed) * 32 * 8)) - 1));
         reportDataVal.setDataType(1);
         mlMotor.motorControl(reportDataVal);
     }

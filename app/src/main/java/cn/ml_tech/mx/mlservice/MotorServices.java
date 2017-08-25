@@ -56,6 +56,7 @@ import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.User;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
+import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
 
 import static android.content.ContentValues.TAG;
 import static java.lang.Long.parseLong;
@@ -67,6 +68,7 @@ import static org.litepal.crud.DataSupport.where;
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
     AlertDialog alertDialog;
+    private MlMotorUtil mlMotorUtil;
     private Random random;
     private Intent intent;
     private String user_id = "";
@@ -134,10 +136,10 @@ public class MotorServices extends Service {
                 Log.d("zw", "typeId " + typeId);
             }
 
-                    LoginLog loginLog = new LoginLog();
-                    loginLog.setUser_id(userid);
-                    loginLog.setLoginDateTime(new Date());
-                    loginLog.save();
+            LoginLog loginLog = new LoginLog();
+            loginLog.setUser_id(userid);
+            loginLog.setLoginDateTime(new Date());
+            loginLog.save();
 
             return users.size() == 0 ? false : true;
         }
@@ -1165,6 +1167,7 @@ public class MotorServices extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         alertDialog = new AlertDialog();
+        mlMotorUtil = MlMotorUtil.getInstance();
         alertDialog.setContext(this);
         log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
