@@ -93,7 +93,7 @@ JNIEXPORT jobject JNICALL Java_cn_ml_1tech_mx_mlservice_SerialPort_open
         jboolean iscopy;
         const char *path_utf = (*env)->GetStringUTFChars(env, path, &iscopy);
         LOGD("Opening serial port %s with flags 0x%x", path_utf, O_RDWR | flags);
-        fd = open(path_utf, O_RDWR | flags, O_CREAT | O_RDWR);
+        fd = open(path_utf,  O_NONBLOCK|O_RDWR, O_RDWR | flags);
         LOGD("open() fd = %d", fd);
         (*env)->ReleaseStringUTFChars(env, path, path_utf);
         if (fd == -1)

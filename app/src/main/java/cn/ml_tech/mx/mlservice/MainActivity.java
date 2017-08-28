@@ -26,7 +26,7 @@ import cn.ml_tech.mx.mlservice.Util.VerSionUtil;
 public class MainActivity extends AppCompatActivity {
     static TextView textView;
     VerSionUtil verSionUtil;
-    private SerialPort serialPort;
+    private SerialPort serialPort, port;
     private OutputStream outputStream;
     private InputStream inputStream;
 
@@ -45,13 +45,42 @@ public class MainActivity extends AppCompatActivity {
             verSionUtil = new VerSionUtil(this);
             verSionUtil.updateVersion();
             try {
-                serialPort = new SerialPort(new File("/dev/ttymxc1"), 19200, 1, this);
+                serialPort = new SerialPort(new File("/dev/ttymxc2"), 19200, 1);
                 outputStream = serialPort.getOutputStream();
-                inputStream = serialPort.getInputStream();
                 if (outputStream != null)
                     Log.d("zw", " out put not null");
-                int[] bytes = {0x55, (2000 & 0xff00) >> 8, (2000 & 0xff00)};
-                outputStream.write(bytes.toString().getBytes());
+                final int[] i = {0};
+                final byte[] bytes = {0x55, (260 & 0xff00) >> 8, (byte) (260 & 0xff00)};
+                outputStream.write(bytes);
+                new Thread() {
+                    @Override
+                    public void run() {
+                        super.run();
+                        try {
+
+                            port = new SerialPort(new File("/dev/ttymxc1"), 19200, 1);
+                            inputStream = port.getInputStream();
+                            byte[] bytes1 = {0x55, 0, 0};
+                            Log.d("zw", "excute");
+                            while (true) {
+                                Log.d("zw", "ssss");
+                                int read = inputStream.read();
+                                while (read != -1) {
+                                    Log.d("zw", "value " + read);
+                                    outputStream.write(bytes1);
+                                }
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Log.d("zw", "out io exception");
+
+                        }
+
+
+                    }
+                }.start();
+
+
             } catch (IOException e) {
                 Log.d("zw", "ioexception");
                 e.printStackTrace();
