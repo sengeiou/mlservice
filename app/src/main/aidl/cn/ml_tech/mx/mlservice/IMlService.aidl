@@ -111,4 +111,6 @@
         long getUserId();
         long geTypeId();
         void deleteDetectionReportsById(in List<String> ids);
+        void operateMlMotor(int type, int dir, double avgspeed, int distance);
+        void operateLight(boolean isOn);
    }

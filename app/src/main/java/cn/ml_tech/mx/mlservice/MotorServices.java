@@ -299,10 +299,6 @@ public class MotorServices extends Service {
             getDevParams();
         }
 
-        /**
-         * @param list
-         * @throws RemoteException
-         */
         @Override
         public void setDrugParamList(List<DrugParam> list) throws RemoteException {
             log("add drugParas");
@@ -342,6 +338,7 @@ public class MotorServices extends Service {
 
         @Override
         public String getTrayIcId() throws RemoteException {
+            // TODO: 2017/8/28 获取托环编号
             Random random = new Random();
             String string = String.valueOf(Math.abs(random.nextInt()));
             return string;
@@ -1160,6 +1157,19 @@ public class MotorServices extends Service {
                 DataSupport.deleteAll(DetectionDetail.class, "detectionreport_id = ?", id);
 
             }
+        }
+
+        @Override
+        public void operateMlMotor(int type, int dir, double avgspeed, int distance) throws RemoteException {
+            mlMotorUtil.operateMlMotor(type, dir, avgspeed, distance);
+        }
+
+        @Override
+        public void operateLight(boolean isOn) throws RemoteException {
+            if (isOn)
+                mlMotorUtil.getMlMotor().motorLightOn();
+            else
+                mlMotorUtil.getMlMotor().motorLightOff();
         }
 
     };
