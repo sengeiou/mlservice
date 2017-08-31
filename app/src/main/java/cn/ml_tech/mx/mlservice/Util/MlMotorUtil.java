@@ -25,9 +25,9 @@ public class MlMotorUtil {
     private byte[] rotale = null;
     private int code = 0;
 
-    public void operateMlMotor(int type, int dir, double avgspeed, int distance) {
+    public void operateMlMotor(int type, double dir, double avgspeed, double distance) {
         reportDataVal.setNum(type);
-        reportDataVal.setDir(dir);
+        reportDataVal.setDir((int) dir);
         reportDataVal.setAcc_time((int) ((distance / avgspeed) / 2));
         reportDataVal.setU16WaveNum((int) (distance / WAVEPERMM));
         reportDataVal.setSpeed((int) (((6350) / ((avgspeed) * 32 * 8)) - 1));
@@ -121,5 +121,14 @@ public class MlMotorUtil {
 
     public void setReportDataVal(MlMotor.ReportDataVal reportDataVal) {
         this.reportDataVal = reportDataVal;
+    }
+
+    public static byte[] intToBytes(int value) {
+        byte[] byte_src = new byte[4];
+        byte_src[3] = (byte) ((value & 0xFF000000) >> 24);
+        byte_src[2] = (byte) ((value & 0x00FF0000) >> 16);
+        byte_src[1] = (byte) ((value & 0x0000FF00) >> 8);
+        byte_src[0] = (byte) ((value & 0x000000FF));
+        return byte_src;
     }
 }
