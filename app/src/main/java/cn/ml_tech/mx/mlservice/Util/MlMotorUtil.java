@@ -45,13 +45,14 @@ public class MlMotorUtil {
             if (rotale == null) {
                 rotale = new byte[]{0, 0, 0};
             }
-            // TODO: 2017/8/29 暂未考虑int数组与byte数组转换问题 
             if (speed != 0) {
-                rotale[0] = 0x55;
-                rotale[1] = (byte) ((speed & 0xff00) >> 8);
-                rotale[2] = (byte) (260 & 0xff00);
+//                rotale[0] = 0x55;
+//                rotale[1] = (byte) ((speed & 0xff00) >> 8);
+//                rotale[2] = (byte) (260 & 0xff00);
+                rotaleOutputStream.write(intToBytes(0x55));
+                rotaleOutputStream.write(intToBytes((speed & 0xff00) >> 8));
+                rotaleOutputStream.write(intToBytes(speed & 0x00ff));
             }
-            rotaleOutputStream.write(rotale);
         } catch (IOException e) {
             e.printStackTrace();
         }

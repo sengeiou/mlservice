@@ -37,6 +37,11 @@ public class DevParam extends DataSupport implements Parcelable {
     @Column( nullable = false,defaultValue = "0")
     private int type;
 
+    public DevParam(String paramName, double paramValue) {
+        this.paramName = paramName;
+        this.paramValue = paramValue;
+    }
+
     public long getId() {
         return id;
     }

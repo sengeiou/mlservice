@@ -1,8 +1,8 @@
     // IMlService.aidl
     package cn.ml_tech.mx.mlservice;
-    import cn.ml_tech.mx.mlservice.MotorControl;
-    import cn.ml_tech.mx.mlservice.DrugControls;
-    import cn.ml_tech.mx.mlservice.FactoryControls;
+    import cn.ml_tech.mx.mlservice.DAO.MotorControl;
+    import cn.ml_tech.mx.mlservice.DAO.DrugControls;
+    import cn.ml_tech.mx.mlservice.DAO.FactoryControls;
     import cn.ml_tech.mx.mlservice.listener.IMlServiceChangeListener;
     import cn.ml_tech.mx.mlservice.DAO.DevParam;
     import cn.ml_tech.mx.mlservice.DAO.DevUuid;
@@ -10,8 +10,7 @@
     import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
     import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
     import cn.ml_tech.mx.mlservice.DAO.DetectionDetail;
-    import cn.ml_tech.mx.mlservice.BottlePara;
-    import cn.ml_tech.mx.mlservice.SpecificationType;
+    import cn.ml_tech.mx.mlservice.DAO.BottlePara;
     import cn.ml_tech.mx.mlservice.DAO.CameraParams;
     import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
     import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
@@ -27,6 +26,8 @@
     import cn.ml_tech.mx.mlservice.DAO.P_Operator;
     import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
     import cn.ml_tech.mx.mlservice.DAO.Permission;
+    import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
+
     // Declare any non-default types here with import statements
     interface IMlService {
         /**
@@ -111,6 +112,9 @@
         long getUserId();
         long geTypeId();
         void deleteDetectionReportsById(in List<String> ids);
-        void operateMlMotor(int type, int dir, double avgspeed, int distance);
+        void operateMlMotor(int type, double dir, double avgspeed, double distance);
         void operateLight(boolean isOn);
+        void rotaleBottle(int speed);
+        List<DevParam> getAllDevParam();
+        void saveAllDevParam(in List<DevParam> devParams);
    }

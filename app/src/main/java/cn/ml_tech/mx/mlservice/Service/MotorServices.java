@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Service;
 
 import android.app.Service;
 import android.content.ContentValues;
@@ -31,6 +31,7 @@ import java.util.Random;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailInfoType;
+import cn.ml_tech.mx.mlservice.DAO.BottlePara;
 import cn.ml_tech.mx.mlservice.DAO.CameraParams;
 import cn.ml_tech.mx.mlservice.DAO.DetectionDetail;
 import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
@@ -38,11 +39,14 @@ import cn.ml_tech.mx.mlservice.DAO.DevDynamicParams;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
 import cn.ml_tech.mx.mlservice.DAO.DevUuid;
 import cn.ml_tech.mx.mlservice.DAO.DrugContainer;
+import cn.ml_tech.mx.mlservice.DAO.DrugControls;
 import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
 import cn.ml_tech.mx.mlservice.DAO.DrugParam;
 import cn.ml_tech.mx.mlservice.DAO.Factory;
+import cn.ml_tech.mx.mlservice.DAO.FactoryControls;
 import cn.ml_tech.mx.mlservice.DAO.LoginLog;
 import cn.ml_tech.mx.mlservice.DAO.Modern;
+import cn.ml_tech.mx.mlservice.DAO.MotorControl;
 import cn.ml_tech.mx.mlservice.DAO.P_Module;
 import cn.ml_tech.mx.mlservice.DAO.P_Operator;
 import cn.ml_tech.mx.mlservice.DAO.P_Source;
@@ -55,6 +59,8 @@ import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.DAO.User;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
+import cn.ml_tech.mx.mlservice.IMlService;
+import cn.ml_tech.mx.mlservice.Util.AlertDialog;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
 
@@ -67,7 +73,7 @@ import static org.litepal.crud.DataSupport.where;
 
 public class MotorServices extends Service {
     private List<DevParam> devParamList;
-    AlertDialog alertDialog;
+    private AlertDialog alertDialog;
     private MlMotorUtil mlMotorUtil;
     private Random random;
     private Intent intent;
@@ -267,12 +273,12 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<cn.ml_tech.mx.mlservice.SpecificationType> getSpecificationTypeList() throws RemoteException {
-            List<cn.ml_tech.mx.mlservice.SpecificationType> typeList = new ArrayList<>();
+        public List<SpecificationType> getSpecificationTypeList() throws RemoteException {
+            List<SpecificationType> typeList = new ArrayList<>();
             Connector.getDatabase();
             List<SpecificationType> types = findAll(SpecificationType.class);
             for (SpecificationType type : types) {
-                cn.ml_tech.mx.mlservice.SpecificationType specificationType = new cn.ml_tech.mx.mlservice.SpecificationType();
+                SpecificationType specificationType = new SpecificationType();
                 specificationType.setId(type.getId());
                 specificationType.setName(type.getName());
                 typeList.add(specificationType);
@@ -339,7 +345,7 @@ public class MotorServices extends Service {
         @Override
         public String getTrayIcId() throws RemoteException {
             // TODO: 2017/8/28 获取托环编号
-            Random random = new Random();
+            random = new Random();
             String string = String.valueOf(Math.abs(random.nextInt()));
             return string;
         }
@@ -590,6 +596,7 @@ public class MotorServices extends Service {
         public void bottleTest(int num) throws RemoteException {
             //jni层调用
             log("每分钟转数" + num);
+            alertDialog.callback("托环不匹配");
         }
 
         @Override
@@ -749,11 +756,7 @@ public class MotorServices extends Service {
             return DataSupport.findLast(DetectionDetail.class);
         }
 
-        /**
-         * @param id
-         * @return
-         * @throws RemoteException
-         */
+
         @Override
         public List<DetectionDetail> queryDetectionDetailByReportId(long id) throws RemoteException {
             List<DetectionDetail> detectionDetails = new ArrayList<>();
@@ -1160,7 +1163,7 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public void operateMlMotor(int type, int dir, double avgspeed, int distance) throws RemoteException {
+        public void operateMlMotor(int type, double dir, double avgspeed, double distance) throws RemoteException {
             mlMotorUtil.operateMlMotor(type, dir, avgspeed, distance);
         }
 
@@ -1172,6 +1175,26 @@ public class MotorServices extends Service {
                 mlMotorUtil.getMlMotor().motorLightOff();
         }
 
+        @Override
+        public void rotaleBottle(int speed) throws RemoteException {
+            mlMotorUtil.operateRotale(speed);
+        }
+
+        @Override
+        public List<DevParam> getAllDevParam() throws RemoteException {
+            List<DevParam> devParams = new ArrayList<>();
+            devParams = DataSupport.findAll(DevParam.class);
+            return devParams;
+        }
+
+        @Override
+        public void saveAllDevParam(List<DevParam> devParams) throws RemoteException {
+            for (DevParam devParam : devParams) {
+                devParam.saveOrUpdate("paramname = ?", devParam.getParamName());
+                Log.d("ww", "name " + devParam.getParamName() + " value " + devParam.getParamValue());
+            }
+        }
+
     };
 
     @Override
@@ -1179,7 +1202,6 @@ public class MotorServices extends Service {
         alertDialog = new AlertDialog();
         mlMotorUtil = MlMotorUtil.getInstance();
         alertDialog.setContext(this);
-        log(AlertDialog.getStringFromNative());
         Connector.getDatabase();
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();

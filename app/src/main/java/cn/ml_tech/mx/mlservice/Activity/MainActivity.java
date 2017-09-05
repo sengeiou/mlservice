@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.Activity;
 
 import android.Manifest;
 import android.content.Context;
@@ -11,24 +11,18 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.HashMap;
 
+import cn.ml_tech.mx.mlservice.R;
 import cn.ml_tech.mx.mlservice.Util.VerSionUtil;
 
 public class MainActivity extends AppCompatActivity {
     static TextView textView;
     VerSionUtil verSionUtil;
-    private SerialPort serialPort, port;
-    private OutputStream outputStream;
-    private InputStream inputStream;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,48 +38,6 @@ public class MainActivity extends AppCompatActivity {
         } else {
             verSionUtil = new VerSionUtil(this);
             verSionUtil.updateVersion();
-            try {
-                serialPort = new SerialPort(new File("/dev/ttymxc2"), 19200, 1);
-                outputStream = serialPort.getOutputStream();
-                if (outputStream != null)
-                    Log.d("zw", " out put not null");
-                final int[] i = {0};
-                final byte[] bytes = {0x55, (260 & 0xff00) >> 8, (byte) (260 & 0xff00)};
-                outputStream.write(bytes);
-                new Thread() {
-                    @Override
-                    public void run() {
-                        super.run();
-                        try {
-
-                            port = new SerialPort(new File("/dev/ttymxc1"), 19200, 1);
-                            inputStream = port.getInputStream();
-                            byte[] bytes1 = {0x55, 0, 0};
-                            Log.d("zw", "excute");
-                            while (true) {
-                                Log.d("zw", "ssss");
-                                int read = inputStream.read();
-                                while (read != -1) {
-                                    Log.d("zw", "value " + read);
-                                    outputStream.write(bytes1);
-                                }
-                            }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            Log.d("zw", "out io exception");
-
-                        }
-
-
-                    }
-                }.start();
-
-
-            } catch (IOException e) {
-                Log.d("zw", "ioexception");
-                e.printStackTrace();
-            }
-
         }
     }
 

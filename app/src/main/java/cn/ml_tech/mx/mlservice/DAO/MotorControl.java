@@ -1,4 +1,4 @@
-package cn.ml_tech.mx.mlservice;
+package cn.ml_tech.mx.mlservice.DAO;
 
 import android.os.Parcel;
 import android.os.Parcelable;
