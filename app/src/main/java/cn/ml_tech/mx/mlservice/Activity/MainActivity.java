@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
@@ -16,12 +15,18 @@ import android.widget.Toast;
 
 import java.util.HashMap;
 
+import cn.ml_tech.mx.mlservice.MlMotor;
 import cn.ml_tech.mx.mlservice.R;
+import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
 import cn.ml_tech.mx.mlservice.Util.VerSionUtil;
+
+import static android.os.Build.VERSION_CODES.M;
 
 public class MainActivity extends AppCompatActivity {
     static TextView textView;
     VerSionUtil verSionUtil;
+
+    MlMotorUtil mlMotorUtil;
 
 
     @Override
@@ -39,7 +44,14 @@ public class MainActivity extends AppCompatActivity {
             verSionUtil = new VerSionUtil(this);
             verSionUtil.updateVersion();
         }
+        MlMotor mlMotor = new MlMotor();
+        mlMotor.initMotor();
+        int reg = 0x08004000 + 0x100;
+        MlMotor.ReportDataReg reportDataReg = new MlMotor.ReportDataReg(reg, 0, 16);
+        mlMotor.motorReadReg(reportDataReg);
+        
     }
+
 
     private String intToString(int[] a) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -70,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @RequiresApi(api = M)
     @Override
     protected void onStart() {
         super.onStart();
