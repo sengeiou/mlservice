@@ -214,7 +214,7 @@ JNIEXPORT void JNICALL Java_cn_ml_1tech_mx_mlservice_MlMotor_motorReadReg
     Display_ReportData_motor(&report_data);
     ioctl(fid, MOTORCMD_READ_REG, &report_data);
 
-    (*env)->SetIntField(env, motor_class, ucRegValueFieldId, report_data.MOTOR.motorReg.val);
+    (*env)->SetIntField(env, obj_motor, ucRegValueFieldId, report_data.MOTOR.motorReg.val);
 }
 
 /*
