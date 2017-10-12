@@ -257,8 +257,9 @@ JNIEXPORT void JNICALL Java_cn_ml_1tech_mx_mlservice_MlMotor_motorQueryState
 
     Report_Data report_data;
     ioctl(fid, MOTORCMD_MOTOR_QUERY, &report_data);
-    (*env)->SetIntField(env, motor_class, dataTypeFieldId, report_data.dataType);
-    (*env)->SetObjectField(env, motor_class, ucMotorStateFieldId, report_data.MOTOR.u8MotorState);
+    (*env)->SetIntField(env, obj_motor, dataTypeFieldId, report_data.dataType);
+LOGI("%d shuzu",report_data.MOTOR.u8MotorState[7]);
+//    (*env)->SetObjectField(env, obj_motor, ucMotorStateFieldId, report_data.MOTOR.u8MotorState);
 }
 
 /*

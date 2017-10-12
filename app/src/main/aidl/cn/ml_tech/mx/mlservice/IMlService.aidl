@@ -50,7 +50,7 @@
         double getDeviceParams(in String paramName,in int type);
         DevUuid getDeviceManagerInfo();
         boolean setDeviceManagerInfo(in DevUuid info);
-        String getTrayIcId();
+        void getTrayIcId();
         List<Tray> getTrayList();
         Tray getTray(in int id);
         boolean setTray(in Tray tray);

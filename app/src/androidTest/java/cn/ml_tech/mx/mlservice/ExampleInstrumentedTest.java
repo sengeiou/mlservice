@@ -7,8 +7,6 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
-
 /**
  * Instrumentation test, which will execute on an Android device.
  *
@@ -20,7 +18,20 @@ public class ExampleInstrumentedTest {
     public void useAppContext() throws Exception {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
+//        assertEquals("cn.ml_tech.mx.mlservice", appContext.getPackageName());
 
-        assertEquals("cn.ml_tech.mx.mlservice", appContext.getPackageName());
+    }
+
+    @Test
+    public void format() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int j = 7; j < 0; j--) {
+            if (((1 << j) & -86) != 0) {
+                stringBuilder.append(1);
+            } else {
+                stringBuilder.append(0);
+            }
+        }
+        System.out.print(stringBuilder.toString());
     }
 }

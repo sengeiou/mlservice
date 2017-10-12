@@ -343,11 +343,13 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public String getTrayIcId() throws RemoteException {
+        public void getTrayIcId() throws RemoteException {
             // TODO: 2017/8/28 获取托环编号
-            random = new Random();
-            String string = String.valueOf(Math.abs(random.nextInt()));
-            return string;
+            Log.d("zw", "读托环");
+            if (intent == null)
+                intent = new Intent();
+            mlMotorUtil.getTrayId(alertDialog, intent);
+
         }
 
         @Override
@@ -1169,14 +1171,17 @@ public class MotorServices extends Service {
 
         @Override
         public void operateLight(boolean isOn) throws RemoteException {
-            if (isOn)
+            Log.d("TAGZW", "BOO " + isOn);
+            if (isOn) {
                 mlMotorUtil.getMlMotor().motorLightOn();
-            else
+            } else {
                 mlMotorUtil.getMlMotor().motorLightOff();
+            }
         }
 
         @Override
         public void rotaleBottle(int speed) throws RemoteException {
+            Log.d("Tagzw", "speed " + speed);
             mlMotorUtil.operateRotale(speed);
         }
 
@@ -1199,8 +1204,8 @@ public class MotorServices extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        mlMotorUtil = MlMotorUtil.getInstance(this);
         alertDialog = new AlertDialog();
-        mlMotorUtil = MlMotorUtil.getInstance();
         alertDialog.setContext(this);
         Connector.getDatabase();
         if (!DataSupport.isExist(UserType.class)) {

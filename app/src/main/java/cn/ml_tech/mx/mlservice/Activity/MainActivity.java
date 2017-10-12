@@ -2,29 +2,35 @@ package cn.ml_tech.mx.mlservice.Activity;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.HashMap;
 
 import cn.ml_tech.mx.mlservice.MlMotor;
 import cn.ml_tech.mx.mlservice.R;
+import cn.ml_tech.mx.mlservice.Util.AlertDialog;
+import cn.ml_tech.mx.mlservice.Util.CommonUtil;
+import cn.ml_tech.mx.mlservice.Util.FileObserverUtil;
 import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
 import cn.ml_tech.mx.mlservice.Util.VerSionUtil;
-
-import static android.os.Build.VERSION_CODES.M;
 
 public class MainActivity extends AppCompatActivity {
     static TextView textView;
     VerSionUtil verSionUtil;
+    private FileObserverUtil fileObserverUtil;
 
     MlMotorUtil mlMotorUtil;
 
@@ -33,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        AlertDialog alertDialog = new AlertDialog();
+        Intent intent = new Intent();
         textView = (TextView) findViewById(R.id.tv);
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -44,14 +52,26 @@ public class MainActivity extends AppCompatActivity {
             verSionUtil = new VerSionUtil(this);
             verSionUtil.updateVersion();
         }
-        MlMotor mlMotor = new MlMotor();
-        mlMotor.initMotor();
-        int reg = 0x08004000 + 0x100;
-        MlMotor.ReportDataReg reportDataReg = new MlMotor.ReportDataReg(reg, 0, 16);
-        mlMotor.motorReadReg(reportDataReg);
-        
+        searchFile();
+
+        mlMotorUtil = MlMotorUtil.getInstance(this);
+        mlMotorUtil.getMlMotor().motorReset(new MlMotor.ReportDataVal(CommonUtil.Device_MachineHand, 0, (int) (((6350) / ((0.02) * 32 * 8)) - 1), 0,
+                (int) mlMotorUtil.WAVEPERMM, 0));
     }
 
+    private void searchFile() {
+        String result = "";
+        File[] files = new File("/sys/class/switch/motor_switch").listFiles();
+        for (File file : files) {
+
+            result += file.getPath() + "\n";
+
+        }
+        if (result.equals("")) {
+            result = "找不到文件!!";
+        }
+        Log.d("zw", result);
+    }
 
     private String intToString(int[] a) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -82,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @RequiresApi(api = M)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onStart() {
         super.onStart();
