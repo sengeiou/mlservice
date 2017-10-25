@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
@@ -63,6 +65,7 @@ import cn.ml_tech.mx.mlservice.IMlService;
 import cn.ml_tech.mx.mlservice.Util.AlertDialog;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
+import cn.ml_tech.mx.mlservice.Util.MotorObserverUtil;
 
 import static android.content.ContentValues.TAG;
 import static java.lang.Long.parseLong;
@@ -86,6 +89,8 @@ public class MotorServices extends Service {
     private long typeId;
     private long reportid;
     private DetectionReport detectionReport;
+    private MotorObserverUtil motorObserverUtil;
+    private Handler handler;
 
     public MotorServices() {
         initMemberData();
@@ -118,6 +123,7 @@ public class MotorServices extends Service {
     }
 
     public List<DrugControls> mDrugControls = new ArrayList<>();
+
     private final IMlService.Stub mBinder = new IMlService.Stub() {
         @Override
         public void addMotorControl(MotorControl mControl) throws RemoteException {
@@ -1099,7 +1105,7 @@ public class MotorServices extends Service {
         @Override
         public void saveDetectionReport(DetectionReport detectionReport) throws RemoteException {
             detectionReport.update(detectionReport.getId());
-            Log.d("zw", "detectionReport id " + detectionReport.getId());
+//            Log.d("zw", "detectionReport id " + detectionReport.getId());
         }
 
         @Override
@@ -1149,7 +1155,7 @@ public class MotorServices extends Service {
 
         @Override
         public long geTypeId() throws RemoteException {
-            Log.d("Zb", "service TypeId " + typeId);
+//            Log.d("Zb", "service TypeId " + typeId);
             return typeId;
         }
 
@@ -1157,7 +1163,7 @@ public class MotorServices extends Service {
         public void deleteDetectionReportsById(List<String> ids) throws RemoteException {
             for (String id :
                     ids) {
-                Log.d("zw", "ddetectionReport id " + id);
+//                Log.d("zw", "ddetectionReport id " + id);
                 DataSupport.delete(DetectionReport.class, Long.parseLong(id.trim()));
                 DataSupport.deleteAll(DetectionDetail.class, "detectionreport_id = ?", id);
 
@@ -1165,13 +1171,14 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public void operateMlMotor(int type, double dir, double avgspeed, double distance) throws RemoteException {
+        public void operateMlMotor(int type, int dir, double avgspeed, int distance) throws RemoteException {
+//            Log.d("zw", "type " + type + " dir" + dir + " avgspeed " + avgspeed + " distance " + distance);
             mlMotorUtil.operateMlMotor(type, dir, avgspeed, distance);
         }
 
         @Override
         public void operateLight(boolean isOn) throws RemoteException {
-            Log.d("TAGZW", "BOO " + isOn);
+//            Log.d("TAGZW", "BOO " + isOn);
             if (isOn) {
                 mlMotorUtil.getMlMotor().motorLightOn();
             } else {
@@ -1200,6 +1207,24 @@ public class MotorServices extends Service {
             }
         }
 
+        @Override
+        public void motorReset(int num) throws RemoteException {
+            mlMotorUtil.motorReset(num);
+        }
+
+        @Override
+        public void autoDebug(int num) throws RemoteException {
+            Log.d("zw", "server autoDebug");
+//            double distance = DataSupport.where("paramname = ?", "MachineHandDistance1").find(DevParam.class).get(0).getParamValue();
+//            double speed = DataSupport.where("paramname = ?", "MachineHandSpeed").find(DevParam.class).get(0).getParamValue();
+//            Log.d("zw", "motor finish distance " + distance + " speed " + speed);
+//            motorObserverUtil.operateMotor(CommonUtil.Device_MachineHand, 1, speed, (int) distance, MotorObserverUtil.MOTORCATCH,
+//                    motorObserverUtil.getStateHandler());
+            motorObserverUtil.autoCheck(handler,num);
+
+        }
+
+
     };
 
     @Override
@@ -1207,6 +1232,14 @@ public class MotorServices extends Service {
         mlMotorUtil = MlMotorUtil.getInstance(this);
         alertDialog = new AlertDialog();
         alertDialog.setContext(this);
+        motorObserverUtil = new MotorObserverUtil(mlMotorUtil);
+        handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                alertDialog.callback("自动检测完成");
+            }
+        };
         Connector.getDatabase();
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
@@ -1462,11 +1495,12 @@ public class MotorServices extends Service {
             cameraParams.save();
             cameraParams.clearSavedState();
             cameraParams.setParamName("globalGain");
-            cameraParams.setParamValue(1.0);
-            cameraParams.save();
+            ;
             cameraParams.clearSavedState();
             cameraParams.setParamName("digitalGain");
             cameraParams.setParamValue(86.0);
+            cameraParams.setParamValue(1.0);
+            cameraParams.save();
             cameraParams.save();
             cameraParams.clearSavedState();
             cameraParams.setParamName("fpgaFilter");

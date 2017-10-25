@@ -163,6 +163,9 @@ public class MlMotor {
 
     public static native void motorQueryState(ReportDataState reportDataState);// TODO: 2017/8/23 查询状态
 
+    /**
+     * @param ReportDataVal speed 0x410
+     */
     public static native void motorReset(ReportDataVal ReportDataVal);// TODO: 2017/8/23  复位某个电机
 
     public static native void motorLightOn();// TODO: 2017/8/23 开激光

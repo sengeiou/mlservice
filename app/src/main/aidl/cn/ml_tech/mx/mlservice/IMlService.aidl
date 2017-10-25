@@ -112,9 +112,11 @@
         long getUserId();
         long geTypeId();
         void deleteDetectionReportsById(in List<String> ids);
-        void operateMlMotor(int type, double dir, double avgspeed, double distance);
+        void operateMlMotor(int type, int dir, double avgspeed, int distance);
         void operateLight(boolean isOn);
         void rotaleBottle(int speed);
         List<DevParam> getAllDevParam();
         void saveAllDevParam(in List<DevParam> devParams);
+        void motorReset(int num);
+        void autoDebug(int num);
    }

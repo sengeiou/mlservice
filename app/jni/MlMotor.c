@@ -258,8 +258,23 @@ JNIEXPORT void JNICALL Java_cn_ml_1tech_mx_mlservice_MlMotor_motorQueryState
     Report_Data report_data;
     ioctl(fid, MOTORCMD_MOTOR_QUERY, &report_data);
     (*env)->SetIntField(env, obj_motor, dataTypeFieldId, report_data.dataType);
-LOGI("%d shuzu",report_data.MOTOR.u8MotorState[7]);
-//    (*env)->SetObjectField(env, obj_motor, ucMotorStateFieldId, report_data.MOTOR.u8MotorState);
+jintArray array = (*env)->GetObjectField(env, obj_motor, ucMotorStateFieldId);
+jint a = report_data.MOTOR.u8MotorState[0];
+jint b = report_data.MOTOR.u8MotorState[1];
+jint c = report_data.MOTOR.u8MotorState[2];
+jint d = report_data.MOTOR.u8MotorState[3];
+jint e = report_data.MOTOR.u8MotorState[4];
+jint f = report_data.MOTOR.u8MotorState[5];
+jint g = report_data.MOTOR.u8MotorState[6];
+jint h = report_data.MOTOR.u8MotorState[7];
+(*env)->SetIntArrayRegion(env,array,0,1,&a);
+(*env)->SetIntArrayRegion(env,array,1,1,&b);
+(*env)->SetIntArrayRegion(env,array,2,1,&c);
+(*env)->SetIntArrayRegion(env,array,3,1,&d);
+(*env)->SetIntArrayRegion(env,array,4,1,&e);
+(*env)->SetIntArrayRegion(env,array,5,1,&f);
+(*env)->SetIntArrayRegion(env,array,6,1,&g);
+(*env)->SetIntArrayRegion(env,array,7,1,&h);
 }
 
 /*

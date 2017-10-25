@@ -18,7 +18,7 @@ import cn.ml_tech.mx.mlservice.SerialPort;
 
 public class MlMotorUtil {
     private static MlMotorUtil mlMotorUtil;
-    private MlMotor mlMotor;
+    private static MlMotor mlMotor;
     private MlMotor.ReportDataReg reportDataReg;
     private MlMotor.ReportDataState reportDataState;
     private MlMotor.ReportDataVal reportDataVal;
@@ -37,15 +37,23 @@ public class MlMotorUtil {
      * @param avgspeed 平均速度
      * @param distance 距离
      */
-    public void operateMlMotor(int type, double dir, double avgspeed, double distance) {
+    public void operateMlMotor(int type, int dir, double avgspeed, int distance) {
+        if (mlMotor == null) {
+            mlMotor = new MlMotor();
+            code = mlMotor.initMotor();
+        }
         reportDataVal.setNum(type);
-        reportDataVal.setDir((int) dir);
+        reportDataVal.setDir(dir);
         reportDataVal.setAcc_time((int) ((distance / avgspeed) / 2));
         reportDataVal.setU16WaveNum((int) (distance / WAVEPERMM));
         reportDataVal.setSpeed((int) (((6350) / ((avgspeed) * 32 * 8)) - 1));
         reportDataVal.setDataType(1);
         mlMotor.motorControl(reportDataVal);
 
+    }
+
+    public void realease() {
+        mlMotor.uninitMotor(code);
     }
 
     /**
@@ -63,6 +71,14 @@ public class MlMotorUtil {
             e.printStackTrace();
         }
 
+    }
+
+    public void motorReset(int num) {
+        if (mlMotor == null) {
+            mlMotor = new MlMotor();
+            code = mlMotor.initMotor();
+        }
+        mlMotor.motorReset(new MlMotor.ReportDataVal(num, 0, 0x410, 0, 0, 0));
     }
 
     public void getTrayId(final AlertDialog alertDialog, final Intent intent) {
@@ -85,7 +101,6 @@ public class MlMotorUtil {
                 int i = 0;
                 while (true) {
                     i++;
-                    Log.d("zw", "i = " + i);
                     if (i > 20000) {
                         operateRotale(0);
                         alertDialog.callback("读取托环失败");
@@ -97,9 +112,7 @@ public class MlMotorUtil {
                         e.printStackTrace();
                     }
                     if (trayId > 0) {
-                        Log.d("zw", "sucessful");
-                        Log.d("zw", tray[0] + " " + tray[1] + " " + tray[2] + " " + tray[3] + " " + tray[4] + " " + tray[5] + " "
-                                + tray[6] + " " + tray[7]);
+
                         if (tray[0] == -86 && tray[1] == -69
                                 && tray[2] > 5 && tray[3] == 32) {
                             res = formatByte(tray[4]) + "" + formatByte(tray[5])
@@ -133,8 +146,7 @@ public class MlMotorUtil {
     }
 
     private MlMotorUtil(Context context) {
-        mlMotor = new MlMotor();
-        code = mlMotor.initMotor();
+
         reportDataReg = new MlMotor.ReportDataReg(0, 0, 0);
         reportDataState = new MlMotor.ReportDataState(new int[]{0}, 1);
         reportDataVal = new MlMotor.ReportDataVal(0, 0, 0, 0, 0, 0);
@@ -148,6 +160,10 @@ public class MlMotorUtil {
     }
 
     public MlMotor getMlMotor() {
+        if (mlMotor == null) {
+            mlMotor = new MlMotor();
+            code = mlMotor.initMotor();
+        }
         return mlMotor;
     }
 
