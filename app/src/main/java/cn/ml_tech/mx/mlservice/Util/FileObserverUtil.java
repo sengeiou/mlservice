@@ -1,16 +1,27 @@
 package cn.ml_tech.mx.mlservice.Util;
 
 
-import android.os.FileObserver;
 import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * Created by zhongwang on 2017/8/28.
  */
 
-public abstract class FileObserverUtil extends FileObserver {
+public abstract class FileObserverUtil {
+    private String path;
+    private BufferedReader reader;
+    private String value;
+    private int i;
+
     public FileObserverUtil(String path) {
-        super(path);
+        this.path = path;
+
     }
 
     public abstract void doInModity();
@@ -19,24 +30,34 @@ public abstract class FileObserverUtil extends FileObserver {
 
     public abstract void doInDelete();
 
-    @Override
-    public void onEvent(int event, String path) {
-        switch (event) {
-            case FileObserver.CREATE:
-                Log.d("ww", "path:" + path);
-                // TODO: 2017/8/22 创建文件 之后要做的操作
-                doInCreate();
-                break;
-            case FileObserver.MODIFY:
-                Log.d("ww", "modify" + "path:" + path);
-                // TODO: 2017/8/22  修改文件之后要做的操作
-                doInModity();
-                break;
-            case FileObserver.DELETE:
-                Log.d("ww", "delete" + "path:" + path);
-                // TODO: 2017/8/22 删除文件之后要做的操作
-                doInDelete();
-                break;
-        }
+    public void startWatch() {
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                try {
+                    i = 0;
+                    while (true) {
+                        File file = new File(path);
+                        FileInputStream fileInputStream = new FileInputStream(file);
+                        reader = new BufferedReader(new InputStreamReader(fileInputStream));
+                        String content = reader.readLine();
+                        reader.close();
+                        fileInputStream.close();
+                        if (i != 0 && !value.trim().equals(content)) {
+                            Log.d("zw", "old " + value + " new  " + content);
+
+                        }
+                        value = content;
+
+                        i++;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
+
     }
 }
