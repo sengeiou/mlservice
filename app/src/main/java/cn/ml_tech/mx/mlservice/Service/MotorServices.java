@@ -65,7 +65,6 @@ import cn.ml_tech.mx.mlservice.IMlService;
 import cn.ml_tech.mx.mlservice.Util.AlertDialog;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
-import cn.ml_tech.mx.mlservice.Util.MotorObserverUtil;
 
 import static android.content.ContentValues.TAG;
 import static java.lang.Long.parseLong;
@@ -89,7 +88,6 @@ public class MotorServices extends Service {
     private long typeId;
     private long reportid;
     private DetectionReport detectionReport;
-    private MotorObserverUtil motorObserverUtil;
     private Handler handler;
 
     public MotorServices() {
@@ -349,12 +347,12 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public void getTrayIcId() throws RemoteException {
+        public void getTrayIcId(int type) throws RemoteException {
             // TODO: 2017/8/28 获取托环编号
             Log.d("zw", "读托环");
             if (intent == null)
                 intent = new Intent();
-            mlMotorUtil.getTrayId(alertDialog, intent);
+            mlMotorUtil.getTrayId(alertDialog, intent, type);
 
         }
 
@@ -643,19 +641,9 @@ public class MotorServices extends Service {
             DataSupport.deleteAllAsync(DrugParam.class, "druginfo_id = ? ", String.valueOf(id));
         }
 
-        /**
-         * @param drug_id
-         * @param checkNum
-         * @param rotateNum
-         * @param detectionNumber
-         * @param detectionBatch
-         * @param isFirst
-         * @param detectionSn
-         * @throws RemoteException
-         */
+
         @Override
         public void startCheck(int drug_id, final int checkNum, int rotateNum, final String detectionNumber, String detectionBatch, final boolean isFirst, final String detectionSn) throws RemoteException {
-            Log.d("zw", drug_id + "check " + checkNum + "rotateNum " + rotateNum + "detectionBatch " + detectionBatch + isFirst);
             if (detectionSn.equals("")) {
                 if (isFirst) {
                     String sn = getDetectionSn();
@@ -999,7 +987,6 @@ public class MotorServices extends Service {
 
         @Override
         public void deletePermission(long sourceoperateid, long userTypeId) throws RemoteException {
-            Log.d("zw", "deletePermission sourceoperateid " + sourceoperateid + " typeId " + userTypeId);
             DataSupport.deleteAll(P_UserTypePermission.class, "p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
 
         }
@@ -1105,7 +1092,6 @@ public class MotorServices extends Service {
         @Override
         public void saveDetectionReport(DetectionReport detectionReport) throws RemoteException {
             detectionReport.update(detectionReport.getId());
-//            Log.d("zw", "detectionReport id " + detectionReport.getId());
         }
 
         @Override
@@ -1155,7 +1141,6 @@ public class MotorServices extends Service {
 
         @Override
         public long geTypeId() throws RemoteException {
-//            Log.d("Zb", "service TypeId " + typeId);
             return typeId;
         }
 
@@ -1213,15 +1198,15 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public void autoDebug(int num) throws RemoteException {
+        public void autoDebug(int type, int num) throws RemoteException {
             Log.d("zw", "server autoDebug");
-//            double distance = DataSupport.where("paramname = ?", "MachineHandDistance1").find(DevParam.class).get(0).getParamValue();
-//            double speed = DataSupport.where("paramname = ?", "MachineHandSpeed").find(DevParam.class).get(0).getParamValue();
-//            Log.d("zw", "motor finish distance " + distance + " speed " + speed);
-//            motorObserverUtil.operateMotor(CommonUtil.Device_MachineHand, 1, speed, (int) distance, MotorObserverUtil.MOTORCATCH,
-//                    motorObserverUtil.getStateHandler());
-            motorObserverUtil.autoCheck(handler,num);
+            mlMotorUtil.autoCheck(handler, type, num);
 
+        }
+
+        @Override
+        public int getNumByTableName(String name) throws RemoteException {
+            return DataSupport.findBySQL("select * from " + name).getCount();
         }
 
 
@@ -1232,7 +1217,6 @@ public class MotorServices extends Service {
         mlMotorUtil = MlMotorUtil.getInstance(this);
         alertDialog = new AlertDialog();
         alertDialog.setContext(this);
-        motorObserverUtil = new MotorObserverUtil(mlMotorUtil);
         handler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -1601,7 +1585,7 @@ public class MotorServices extends Service {
         int currentDate = Integer.parseInt(currentTime);
         if (currentDate > lastDate) {
             result = currentTime + "001";
-        } else if (currentDate == lastDate) {
+        } else {
             int current = Integer.parseInt(lastDetNum.getParamValue()) + 1;
             if (current < 10) {
                 result = currentTime + "00" + current;
