@@ -36,7 +36,6 @@
          */
         void addMotorControl(in MotorControl mControl);
         boolean checkAuthority(String name, String password);
-        void startCalibration();
         boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId,String id);
         boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code);
         List<DrugControls> queryDrugControl();
@@ -50,7 +49,7 @@
         double getDeviceParams(in String paramName,in int type);
         DevUuid getDeviceManagerInfo();
         boolean setDeviceManagerInfo(in DevUuid info);
-        void getTrayIcId();
+        void getTrayIcId(int type);
         List<Tray> getTrayList();
         Tray getTray(in int id);
         boolean setTray(in Tray tray);
@@ -81,7 +80,7 @@
         DetectionReport getLastReport();
         DrugControls queryDrugControlsById(long id);
         DevUuid getDevUuidInfo();
-        List<DetectionReport> getAllDetectionReports(boolean isSelf);
+        List<DetectionReport> getAllDetectionReports();
         List<UserType> getAllUserType();
         void updateUser(in User user);
         UserType getUserTypeById(long id);
@@ -89,20 +88,11 @@
         void addAudittrail(in int event_id,in int info_id,String value,String mark);
         List<String> getAllTableName();
         List<String> getFieldByName(String name);
-        Modern getDataByTableName(String tableName);
+        Modern getDataByTableName(String tableName,in int page);
         void updateData(String tableName,in Modern modern);
         void deleteData(String tableName,in List<String> id);
-        List<P_Source> getRootP_Source();
-        List<P_Source> getP_SourceByUrl(String url);
-        PermissionHelper getP_OperatorBySourceId(long id);
-        boolean isOperate(long sourceoperateid,long userTypeId);
-        void deletePermission(long sourceoperateid,long userTypeId);
-        void addPermission(long sourceoperateid,long userTypeId);
         boolean canAddType(String typeName);
         void addUserType(String typeName,in List<String>sourceoperateId);
-        Permission getPermissonByUrl(String title,boolean isRoot);
-        List<P_Source> getAllP_Source();
-        List<P_Operator> getAllP_Operator();
         List<DevParam> getDevParamByType(int type);
         void saveDevParam(in List<DevParam> devParams);
         void saveDetectionReport(in DetectionReport detectionReport);
@@ -118,5 +108,7 @@
         List<DevParam> getAllDevParam();
         void saveAllDevParam(in List<DevParam> devParams);
         void motorReset(int num);
-        void autoDebug(int num);
+        void autoDebug(int type, int num);
+        int getNumByTableName(String name);
+        void OperateReportInfo(in List<String> reportIds,String type);
    }

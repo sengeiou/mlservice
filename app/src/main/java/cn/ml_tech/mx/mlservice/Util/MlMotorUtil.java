@@ -6,6 +6,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.litepal.crud.DataSupport;
 
 import java.io.File;
@@ -14,14 +16,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
+import cn.ml_tech.mx.mlservice.DAO.DetectionDetail;
+import cn.ml_tech.mx.mlservice.DAO.DetectionReport;
 import cn.ml_tech.mx.mlservice.DAO.DevParam;
+import cn.ml_tech.mx.mlservice.DAO.DevUuid;
+import cn.ml_tech.mx.mlservice.DAO.DrugContainer;
+import cn.ml_tech.mx.mlservice.DAO.DrugInfo;
+import cn.ml_tech.mx.mlservice.DAO.Factory;
+import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
 import cn.ml_tech.mx.mlservice.MlMotor;
 import cn.ml_tech.mx.mlservice.SerialPort;
 
 import static cn.ml_tech.mx.mlservice.Util.CommonUtil.AUTOEBUG_CALIBRATE;
+import static cn.ml_tech.mx.mlservice.Util.CommonUtil.AUTOEBUG_CHECK;
 import static cn.ml_tech.mx.mlservice.Util.CommonUtil.TRAYID_ID;
 import static cn.ml_tech.mx.mlservice.Util.CommonUtil.TRAYID_RADIO;
 
@@ -48,6 +60,10 @@ public class MlMotorUtil {
     private FileInputStream fileInputStream;
     private String content = "";
     private int num;
+    private DetectionReport detectionReport;
+    private Intent intent;
+    private SimpleDateFormat dateFormat;
+    private int number = 0, checkNum;
     private Handler ressetHandler = new Handler() {
 
 
@@ -56,17 +72,9 @@ public class MlMotorUtil {
             super.handleMessage(msg);
             switch (msg.what) {
                 case CommonUtil.Device_MachineHand:
-                    // TODO: 2017/10/26 自动上瓶未有，复位时假设为自动上瓶
-                    if (type == AUTOEBUG_CALIBRATE) {
-                        Intent intent = new Intent("com.calibration");
-                        intent.putExtra("state", 0);
-                        context.sendBroadcast(intent);
-                    }
-                    Log.d("zw", "reset Device_Pressed");
                     motorReset(CommonUtil.Device_Pressed, ressetHandler);
                     break;
                 case CommonUtil.Device_Pressed:
-                    Log.d("zw", "reset Device_CatchHand");
                     motorReset(CommonUtil.Device_CatchHand, ressetHandler);
                     break;
                 case CommonUtil.Device_CatchHand:
@@ -91,6 +99,8 @@ public class MlMotorUtil {
         return stateHandler;
     }
 
+    private boolean isFirst;
+    private String detectionSn;
     private Handler stateHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -184,6 +194,49 @@ public class MlMotorUtil {
                         intent.putExtra("colorcoefficient", "18.29");
                         context.sendBroadcast(intent);
                     }
+                    if (type == AUTOEBUG_CHECK) {
+                        if (detectionSn.trim().equals("")) {
+                            if (isFirst) {
+                                detectionReport.setDetectionFirstCount(number + 1);
+                            } else {
+                                detectionReport.setDetectionSecondCount(number + 1);
+                            }
+                            if (number == 0) {
+                                if (isFirst)
+                                    detectionReport.save();
+                                saveCheckDate();
+                                getCheckInfo(number, checkNum, isFirst, detectionReport.getId(), detectionSn);
+                                if (!isFirst) {
+                                    detectionReport.update(detectionReport.getId());
+
+                                }
+                            } else {
+                                Log.d("zw", "second save");
+                                getCheckInfo(number, checkNum, isFirst, detectionReport.getId(), detectionSn);
+                                detectionReport.update(detectionReport.getId());
+                            }
+                            number++;
+                        } else {
+                            Log.d("zw", "detectionSn " + detectionSn);
+                            detectionReport = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class).get(0);
+                            if (detectionReport.getDetectionSecondCount() == 0 && detectionReport.getDetectionCount() > detectionReport.getDetectionFirstCount()) {
+                                for (int i = detectionReport.getDetectionFirstCount(); i < checkNum; i++) {
+
+                                    detectionReport.setDetectionFirstCount(detectionReport.getDetectionFirstCount() + 1);
+                                    detectionReport.update(detectionReport.getId());
+                                    getCheckInfo(i, checkNum, isFirst, detectionReport.getId(), detectionSn);
+                                }
+                            } else {
+                                for (int i = detectionReport.getDetectionSecondCount(); i < checkNum; i++) {
+                                    detectionReport.setDetectionSecondCount(detectionReport.getDetectionSecondCount() + 1);
+                                    detectionReport.update(detectionReport.getId());
+                                    getCheckInfo(i, checkNum, isFirst, detectionReport.getId(), detectionSn);
+                                }
+                            }
+
+
+                        }
+                    }
                     operateMotor(CommonUtil.Device_MachineHand, 1,
                             DataSupport.where("paramname = ?", "MachineHandSpeed").find(DevParam.class).get(0).getParamValue(),
                             (int) DataSupport.where("paramname = ?", "MachineHandDistance3").find(DevParam.class).get(0).getParamValue(), CHECKLOCATION, stateHandler);
@@ -233,7 +286,9 @@ public class MlMotorUtil {
                                         intent.putExtra("state", 7);
                                         context.sendBroadcast(intent);
                                     } else {
-                                        handler.sendEmptyMessage(1);
+                                        if (handler != null) {
+                                            handler.sendEmptyMessage(1);
+                                        }
                                     }
                                 } catch (InterruptedException e) {
                                     e.printStackTrace();
@@ -330,7 +385,7 @@ public class MlMotorUtil {
                     i++;
                     if (i > 20000) {
                         operateRotale(0);
-                        alertDialog.callback("读取托环失败");
+                        alertDialog.callback("读取托环失败","");
                         break;
                     }
                     try {
@@ -358,7 +413,7 @@ public class MlMotorUtil {
                                     case TRAYID_RADIO:
                                         List<Tray> trayList = DataSupport.where("icid=?", res + "").find(Tray.class);
                                         if (trayList == null || trayList.size() == 0) {
-                                            alertDialog.callback("托环信息不匹配");
+                                            alertDialog.callback("托环信息不匹配","");
                                         } else {
                                             intent.setAction("com.trayradio");
                                             intent.putExtra("info", (int) trayList.get(0).getDiameter() + "");
@@ -437,17 +492,6 @@ public class MlMotorUtil {
         this.reportDataVal = reportDataVal;
     }
 
-    public String format(byte b) {
-        StringBuilder stringBuilder = new StringBuilder();
-//        for (int j = 31; j > 0; j--) {
-//            int t = (b & 0x80000000 >>> j) >>> (31 - j);
-//
-//                stringBuilder.append(t);
-//
-//        }
-
-        return stringBuilder.toString();
-    }
 
     public static String formatByte(byte a) {
         String res = Integer.toHexString(a);
@@ -468,28 +512,51 @@ public class MlMotorUtil {
         return byte_src;
     }
 
-    public void autoCheck(Handler handler, int type, int num) {
+
+    public void checkDrug(int drug_id,
+                          int checkNum,
+                          int rotateNum,
+                          String detectionNumber,
+                          String detectionBatch,
+                          boolean isFirst,
+                          String detectionSn,
+                          long userid,
+                          String user_id, int type) {
+        this.num = checkNum;
+        this.type = type;
+        this.isFirst = isFirst;
+        this.checkNum = checkNum;
+        this.detectionSn = detectionSn;
+        this.number = 0;
+        initDetectReportInfo(drug_id, checkNum, rotateNum, detectionNumber, detectionBatch, userid, user_id, isFirst, detectionSn);
+        motorReset(CommonUtil.Device_MachineHand, ressetHandler);
+
+    }
+
+
+    public void autoCheck(Handler handler, int type, int num, DetectionReport... detectionReports) {
         this.num = num;
         this.type = type;
         this.handler = handler;
         mlMotorUtil.getMlMotor().motorLightOff();
+        // TODO: 2017/10/26 自动上瓶未有，复位时假设为自动上瓶
+        if (type == AUTOEBUG_CALIBRATE) {
+            Intent intent = new Intent("com.calibration");
+            intent.putExtra("state", 0);
+            context.sendBroadcast(intent);
+        }
         motorReset(CommonUtil.Device_MachineHand, ressetHandler);
     }
 
     private void motorReset(final int type, final Handler handlers) {
         mlMotorUtil.motorReset(type);
-
         new Thread() {
             public void run() {
                 super.run();
                 content = "";
                 while (true) {
-
                     boolean res = isMotorReset(type);
-
                     if (res) {
-
-
                         Log.d("zw", "res " + res + "type " + type);
                         handlers.sendEmptyMessage(type);
 
@@ -576,6 +643,205 @@ public class MlMotorUtil {
                 }
             }
         }.start();
+    }
+
+    private void initDetectReportInfo(int drug_id, final int checkNum,
+                                      int rotateNum, final String detectionNumber,
+                                      String detectionBatch, long userid, String user_id,
+                                      final boolean isFirst, final String detectionSn) {
+        if (detectionSn.trim().equals("")) {
+            String sn = getDetectionSn();
+            if (isFirst) {
+                detectionReport = getReportByInfo(drug_id, checkNum,
+                        detectionNumber,
+                        detectionBatch, sn, userid, user_id);
+            } else {
+                detectionReport = DataSupport.findLast(DetectionReport.class);
+            }
+        } else {
+            List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
+            detectionReport = detectionReports.get(0);
+
+        }
+    }
+
+    private DetectionReport getReportByInfo(int drug_id, int checkNum,
+                                            String detectionNumber, String detectionBatch,
+                                            String sn, long userid, String user_id) {
+        DetectionReport detectionReport = new DetectionReport();
+        detectionReport.setDetectionSn(sn);
+        detectionReport.setDetectionBatch(detectionBatch);
+        detectionReport.setDetectionNumber(detectionNumber);
+        detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, drug_id).getDrugcontainer_id()).getName());
+        detectionReport.setUser_id(userid);
+        detectionReport.setUserName(user_id);
+        detectionReport.setDate(new Date());
+        detectionReport.setDetectionCount(checkNum);
+        detectionReport.setDruginfo_id(drug_id);
+        detectionReport.setDetectionCount(checkNum);
+        detectionReport.setDrugName(DataSupport.find(DrugInfo.class, drug_id).getName());
+        detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, drug_id).getFactory_id()).getName());
+        return detectionReport;
+    }
+
+    private void getCheckInfo(int i, int checkNum, boolean isFirst, long reportid, String detectionSn) {
+        DetectionDetail detectionDetail = new DetectionDetail();
+        detectionDetail.setDetectionreport_id(reportid);
+        detectionDetail.setPositive(i % 2 == 0 ? true : false);
+        detectionDetail.setColorFactor(150);
+        detectionDetail.setScrTime(4.0);
+        detectionDetail.setStpTime(3.0);
+        detectionDetail.setScrTimeText("正常");
+        detectionDetail.setStpTimeText("正常");
+        detectionDetail.setData1(0.1);
+        detectionDetail.setData2(0.3);
+        detectionDetail.setData3(0.3);
+        detectionDetail.setData4(0.3);
+        detectionDetail.setVideo("test.mp4");
+        detectionDetail.setVideoMd5("sadasdqqw");
+        detectionDetail.setValid(false);
+        if (isFirst) {
+            detectionDetail.setDetIndex(i + 1);
+        } else {
+            detectionDetail.setRepIndex(i + 1);
+        }
+        JSONObject jsonObject = new JSONObject();
+        setNodeInfo(jsonObject, i);
+        detectionDetail.setNodeInfo(jsonObject.toString());
+        Log.d("zw", "out " + detectionDetail.getDetectionreport_id());
+        detectionDetail.save();
+
+        if (intent == null) {
+            intent = new Intent();
+        }
+        intent.setAction("com.checkfinsh");
+        if ((checkNum - 1) == i) {
+            if (isFirst) {
+                intent.putExtra("state", "finish");
+            } else {
+                intent.putExtra("state", "secondfinish");
+            }
+        } else {
+            intent.putExtra("state", "process");
+        }
+        context.sendBroadcast(intent);
+    }
+
+    private void setNodeInfo(JSONObject jsonObject, int i) {
+        JSONObject floatdata = new JSONObject();
+        JSONObject glassprecent = new JSONObject();
+        JSONObject glasstime = new JSONObject();
+        JSONObject max = new JSONObject();
+        JSONObject min = new JSONObject();
+        JSONObject supers = new JSONObject();
+        JSONObject statistics40 = new JSONObject();
+        JSONObject statistics50 = new JSONObject();
+        JSONObject statistics60 = new JSONObject();
+        JSONObject statistics70 = new JSONObject();
+        try {
+            floatdata.put("name", "漂浮物检出次数(次)");
+            floatdata.put("data", i);
+            floatdata.put("result", "阴性");
+            glassprecent.put("name", "速降物检出率(%)");
+            glassprecent.put("data", 0);
+            glassprecent.put("result", "阳性");
+            glasstime.put("name", "速降物时间比例(%)");
+            glasstime.put("data", 1.62);
+            max.put("name", "50-70um异物检出数(颗)");
+            max.put("data", 2);
+            min.put("name", "40-50um异物检出数(颗)");
+            min.put("data", 3);
+            min.put("result", "阴性");
+            supers.put("name", "70um以上异物检出数(颗)");
+            supers.put("data", 3);
+            supers.put("result", "阴性");
+            statistics40.put("name", "40-50um异物检出率(%)");
+            statistics40.put("data", 2);
+            statistics40.put("result", "阴性");
+            statistics50.put("name", "50-60um异物检出率(%)");
+            statistics50.put("data", 2);
+            statistics60.put("name", "60-70um异物检出率(%)");
+            statistics60.put("data", 2);
+            statistics70.put("name", "70um以上异物检出率(%)");
+            statistics70.put("data", 2);
+            jsonObject.put("floatdta", floatdata);
+            jsonObject.put("glassprecent", glassprecent);
+            jsonObject.put("glasstime", glasstime);
+            jsonObject.put("max", max);
+            jsonObject.put("min", min);
+            jsonObject.put("super", supers);
+            jsonObject.put("statistics40", statistics40);
+            jsonObject.put("statistics50", statistics50);
+            jsonObject.put("statistics60", statistics60);
+            jsonObject.put("statistics70", statistics70);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getDetectionSn() {
+        String result = "";
+        String uuid = getDevUuid();
+        String date = getDetectionSnDate();
+        result = uuid + date;
+        return result;
+    }
+
+    public String getDevUuid() {
+        List<DevUuid> devUuid = DataSupport.findAll(DevUuid.class);
+        return devUuid.get(0).getUserAbbreviation();
+    }
+
+    public void saveCheckDate() {
+        List<SystemConfig> systemConfigs = DataSupport.where("paramName = ?", "LastDetDate").find(SystemConfig.class);
+        List<SystemConfig> lastDetNums = DataSupport.where("paramName = ?", "LastDetNum").find(SystemConfig.class);
+        SystemConfig lastDetNum = lastDetNums.get(0);
+        SystemConfig config = systemConfigs.get(0);
+        String currentTime = dateFormat.format(new Date());
+        int lastDate = Integer.parseInt(config.getParamValue());
+        int currentDate = Integer.parseInt(currentTime);
+        Log.d("zw", "lastdate" + lastDate + " currentDate" + currentDate + " ");
+        if (currentDate > lastDate) {
+            config.setParamValue(currentTime);
+            config.saveOrUpdate("paramName = ?", config.getParamName());
+            lastDetNum.setParamValue("1");
+            lastDetNum.saveOrUpdate("paramName = ?", lastDetNum.getParamName());
+        } else if (currentDate == lastDate) {
+            String res = lastDetNum.getParamValue();
+            int i = Integer.parseInt(res) + 1;
+            Log.d("zw", "res " + res + "resl" + i);
+            lastDetNum.setParamValue(String.valueOf(i));
+            lastDetNum.saveOrUpdate("paramName = ?", lastDetNum.getParamName());
+
+        }
+    }
+
+    public String getDetectionSnDate() {
+        String result = "";
+        List<SystemConfig> systemConfigs = DataSupport.where("paramName = ?", "LastDetDate").find(SystemConfig.class);
+        List<SystemConfig> lastDetNums = DataSupport.where("paramName = ?", "LastDetNum").find(SystemConfig.class);
+        SystemConfig lastDetNum = lastDetNums.get(0);
+        SystemConfig config = systemConfigs.get(0);
+        Log.d("zw", lastDetNum.getParamValue() + config.getParamValue());
+        if (dateFormat == null) {
+            dateFormat = new SimpleDateFormat("yyyyMMdd");
+        }
+        String currentTime = dateFormat.format(new Date());
+        int lastDate = Integer.parseInt(config.getParamValue());
+        int currentDate = Integer.parseInt(currentTime);
+        if (currentDate > lastDate) {
+            result = currentTime + "001";
+        } else {
+            int current = Integer.parseInt(lastDetNum.getParamValue()) + 1;
+            if (current < 10) {
+                result = currentTime + "00" + current;
+            } else if (current > 10 && current < 100) {
+                result = currentTime + "0" + current;
+            } else {
+                result = currentTime + current;
+            }
+        }
+        return result;
     }
 
     /**

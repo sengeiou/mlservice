@@ -24,14 +24,14 @@ public class AlertDialog {
         this.context = context;
     }
 
-    /**
-     * @param fromNative
-     */
-    public void callback(String fromNative) {
+
+    public void callback(String dialoginfo, String extra) {
         Intent intent = new Intent();
         intent.setAction("com.alert");
-        intent.putExtra("info", fromNative);
-        Log.d("zw", fromNative);
+        intent.putExtra("info", dialoginfo);
+        if (!extra.trim().equals("")) {
+            intent.putExtra("extra", extra);
+        }
         if (context != null)
             context.sendBroadcast(intent);
         Log.d("zw", "sssssss");

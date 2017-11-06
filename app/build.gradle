@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "cn.ml_tech.mx.mlservice"
         minSdkVersion 19
@@ -38,4 +38,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'org.litepal.android:core:1.5.1'
     compile 'com.squareup.okhttp3:okhttp:3.8.1'
+    compile files('libs/itextpdf-5.5.5.jar')
 }

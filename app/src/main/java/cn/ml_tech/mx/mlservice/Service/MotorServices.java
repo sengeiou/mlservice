@@ -11,8 +11,6 @@ import android.os.Message;
 import android.os.RemoteException;
 import android.util.Log;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.litepal.LitePal;
 import org.litepal.crud.DataSupport;
 import org.litepal.tablemanager.Connector;
@@ -25,10 +23,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import cn.ml_tech.mx.mlservice.DAO.AuditTrail;
 import cn.ml_tech.mx.mlservice.DAO.AuditTrailEventType;
@@ -51,11 +47,7 @@ import cn.ml_tech.mx.mlservice.DAO.Modern;
 import cn.ml_tech.mx.mlservice.DAO.MotorControl;
 import cn.ml_tech.mx.mlservice.DAO.P_Module;
 import cn.ml_tech.mx.mlservice.DAO.P_Operator;
-import cn.ml_tech.mx.mlservice.DAO.P_Source;
-import cn.ml_tech.mx.mlservice.DAO.P_SourceOperator;
 import cn.ml_tech.mx.mlservice.DAO.P_UserTypePermission;
-import cn.ml_tech.mx.mlservice.DAO.Permission;
-import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
@@ -63,8 +55,11 @@ import cn.ml_tech.mx.mlservice.DAO.User;
 import cn.ml_tech.mx.mlservice.DAO.UserType;
 import cn.ml_tech.mx.mlservice.IMlService;
 import cn.ml_tech.mx.mlservice.Util.AlertDialog;
+import cn.ml_tech.mx.mlservice.Util.CommonUtil;
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
 import cn.ml_tech.mx.mlservice.Util.MlMotorUtil;
+import cn.ml_tech.mx.mlservice.Util.PdfUtil;
+import cn.ml_tech.mx.mlservice.Util.PermissionUtil;
 
 import static android.content.ContentValues.TAG;
 import static java.lang.Long.parseLong;
@@ -77,18 +72,16 @@ public class MotorServices extends Service {
     private List<DevParam> devParamList;
     private AlertDialog alertDialog;
     private MlMotorUtil mlMotorUtil;
-    private Random random;
+    private PermissionUtil permissionUtil;
     private Intent intent;
     private String user_id = "";
     private long userid;
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
     private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
     private SimpleDateFormat audittraformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private DetectionDetail detectionDetail;
     private long typeId;
-    private long reportid;
-    private DetectionReport detectionReport;
     private Handler handler;
+    private PdfUtil pdfUtil;
 
     public MotorServices() {
         initMemberData();
@@ -143,49 +136,12 @@ public class MotorServices extends Service {
                 user_id = users.get(0).getUserId();
                 userid = users.get(0).getId();
                 typeId = users.get(0).getUsertype_id();
-                Log.d("zw", "typeId " + typeId);
             }
-
             LoginLog loginLog = new LoginLog();
             loginLog.setUser_id(userid);
             loginLog.setLoginDateTime(new Date());
             loginLog.save();
-
             return users.size() == 0 ? false : true;
-        }
-
-        @Override
-        public void startCalibration() throws RemoteException {
-            new Thread() {
-                @Override
-                public void run() {
-                    super.run();
-                    for (int i = 0; i < 8; i++) {
-                        try {
-                            Thread.sleep(2000);
-                            intent = new Intent();
-                            intent.setAction("com.calibration");
-                            intent.putExtra("state", i);
-                            if (i == 5) {
-                                intent.putExtra("standard40", "4.82px");
-                                intent.putExtra("standard50", "4.82px");
-                                intent.putExtra("standard60", "4.82px");
-                                intent.putExtra("variance40", "3.29");
-                                intent.putExtra("variance60", "18.29");
-                                intent.putExtra("statime", "0.00s");
-                                intent.putExtra("stotime", "0.00s");
-                                intent.putExtra("stpstate", "normal");
-                                intent.putExtra("stostate", "normal");
-                                intent.putExtra("colorcoefficient", "18.29");
-                            }
-                            sendBroadcast(intent);
-
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }.start();
         }
 
         @Override
@@ -204,13 +160,11 @@ public class MotorServices extends Service {
                 drugInfo.setId(parseLong(id));
                 drugInfo.saveOrUpdate("id = ?", String.valueOf(drugInfo.getId()));
             }
-            log("add Drug info....");
             return true;
         }
 
         @Override
         public boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code) throws RemoteException {
-
             Factory factory = new Factory();
             factory.setName(name);
             factory.setAddress(address);
@@ -348,8 +302,6 @@ public class MotorServices extends Service {
 
         @Override
         public void getTrayIcId(int type) throws RemoteException {
-            // TODO: 2017/8/28 获取托环编号
-            Log.d("zw", "读托环");
             if (intent == null)
                 intent = new Intent();
             mlMotorUtil.getTrayId(alertDialog, intent, type);
@@ -408,7 +360,6 @@ public class MotorServices extends Service {
 
         @Override
         public List<DetectionReport> getDetectionReportList(int reportId) throws RemoteException {
-//            List<DetectionReport>list=DataSupport.findBySQL("");
 
             return null;
         }
@@ -573,7 +524,6 @@ public class MotorServices extends Service {
         @Override
         public void enterBottle() throws RemoteException {
             //调用jni进瓶，以下代码为模拟操作
-            random = new Random();
             log("enterBottle");
             new Thread() {
                 @Override
@@ -602,7 +552,7 @@ public class MotorServices extends Service {
         public void bottleTest(int num) throws RemoteException {
             //jni层调用
             log("每分钟转数" + num);
-            alertDialog.callback("托环不匹配");
+            alertDialog.callback("托环不匹配", "");
         }
 
         @Override
@@ -644,96 +594,9 @@ public class MotorServices extends Service {
 
         @Override
         public void startCheck(int drug_id, final int checkNum, int rotateNum, final String detectionNumber, String detectionBatch, final boolean isFirst, final String detectionSn) throws RemoteException {
-            if (detectionSn.equals("")) {
-                if (isFirst) {
-                    String sn = getDetectionSn();
-                    MotorServices.this.addAudittrail(1, 1, sn, "Save the new information");
-                    detectionReport = new DetectionReport();
-                    detectionReport.setDetectionSn(sn);
-                    detectionReport.setDetectionBatch(detectionBatch);
-                    detectionReport.setDetectionNumber(detectionNumber);
-                    detectionReport.setDrugBottleType(DataSupport.find(DrugContainer.class, DataSupport.find(DrugInfo.class, drug_id).getDrugcontainer_id()).getName());
-                    detectionReport.setUser_id(userid);
-                    detectionReport.setUserName(user_id);
-                    detectionReport.setDate(new Date());
-                    detectionReport.setDetectionCount(checkNum);
-                    detectionReport.setDruginfo_id(drug_id);
-                    detectionReport.setDetectionCount(checkNum);
-                    detectionReport.setDrugName(DataSupport.find(DrugInfo.class, drug_id).getName());
-                    detectionReport.setFactoryName(DataSupport.find(Factory.class, DataSupport.find(DrugInfo.class, drug_id).getFactory_id()).getName());
-                } else {
-                    detectionReport = DataSupport.findLast(DetectionReport.class);
-                }
-                new Thread() {
-                    @Override
-                    public void run() {
-                        super.run();
-                        try {
-                            for (int i = 0; i < checkNum; i++) {
-                                Thread.sleep(500);
-                                try {
-                                    if (isFirst) {
-                                        detectionReport.setDetectionFirstCount(i + 1);
-                                    } else
-                                        detectionReport.setDetectionSecondCount(i + 1);
-                                    if (i == 0) {
-                                        detectionReport.save();
-                                        detectionReport.clearSavedState();
-                                        reportid = detectionReport.getId();
-                                    } else {
-                                        detectionReport.update(detectionReport.getId());
-                                    }
-                                    simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
-                                    if ((i == 0) && (detectionSn.equals("")) && isFirst) {
-                                        saveCheckDate();
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }.start();
-            } else {
-                Log.d("zw", "detectionsn" + detectionSn);
-                List<DetectionReport> detectionReports = DataSupport.where("detectionSn = ?", detectionSn).find(DetectionReport.class);
-                final DetectionReport Report = detectionReports.get(0);
-                new Thread() {
-                    @Override
-                    public void run() {
-                        super.run();
-                        try {
-                            try {
-                                Thread.sleep(500);
-                                Log.d("zw", "secondcount" + Report.getDetectionSecondCount());
-                                if (Report.getDetectionSecondCount() == 0 && Report.getDetectionCount() > Report.getDetectionFirstCount()) {
-                                    for (int i = Report.getDetectionFirstCount(); i < checkNum; i++) {
-                                        reportid = Report.getId();
-                                        Report.setDetectionFirstCount(Report.getDetectionFirstCount() + 1);
-                                        Report.update(Report.getId());
-                                        simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
-                                    }
-                                } else {
-                                    for (int i = Report.getDetectionSecondCount(); i < checkNum; i++) {
-                                        Report.setDetectionSecondCount(Report.getDetectionSecondCount() + 1);
-                                        Report.update(Report.getId());
-                                        reportid = Report.getId();
-                                        simulatieDate(i, checkNum, isFirst, reportid, detectionSn);
-                                    }
-                                }
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }.start();
-            }
+            mlMotorUtil.checkDrug(drug_id, checkNum, rotateNum, detectionNumber,
+                    detectionBatch, isFirst, detectionSn, userid
+                    , user_id, CommonUtil.AUTOEBUG_CHECK);
         }
 
 
@@ -787,12 +650,8 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public List<DetectionReport> getAllDetectionReports(boolean isSelf) throws RemoteException {
-            if (!isSelf) {
-                return DataSupport.findAll(DetectionReport.class);
-            } else {
-                return DataSupport.where("user_id = ?", userid + "").find(DetectionReport.class);
-            }
+        public List<DetectionReport> getAllDetectionReports() throws RemoteException {
+            return DataSupport.findAll(DetectionReport.class);
         }
 
         @Override
@@ -859,7 +718,7 @@ public class MotorServices extends Service {
         }
 
         @Override
-        public Modern getDataByTableName(String tableName) throws RemoteException {
+        public Modern getDataByTableName(String tableName, int page) throws RemoteException {
             Modern modern = new Modern();
             Map<Integer, List<String>> dataMap = new HashMap<>();
             List<String> field = new ArrayList<>();
@@ -867,7 +726,7 @@ public class MotorServices extends Service {
             while (cursor.moveToNext()) {
                 field.add(cursor.getString(cursor.getColumnIndex("name")));
             }
-            cursor = DataSupport.findBySQL("select *from " + tableName);
+            cursor = DataSupport.findBySQL("select * from " + tableName + " limit 15 offset " + (page - 1) * 15);
             int i = 0;
             while (cursor.moveToNext()) {
                 List<String> data = new ArrayList<>();
@@ -918,7 +777,6 @@ public class MotorServices extends Service {
 
         @Override
         public void deleteData(String tableName, List<String> id) throws RemoteException {
-            Log.d("zw", "start deleteData");
 
             for (int i = 0; i < id.size(); i++) {
                 Log.d("zw", " id " + id.get(i));
@@ -926,79 +784,6 @@ public class MotorServices extends Service {
             }
         }
 
-        @Override
-        public List<P_Source> getRootP_Source() throws RemoteException {
-            List<P_Source> p_sources = new ArrayList<>();
-            p_sources = DataSupport.findAll(P_Source.class);
-            for (int i = 0; i < p_sources.size(); i++) {
-                P_Source p_source = p_sources.get(i);
-                if (p_source.getUrl().contains("/")) {
-                    p_sources.remove(i);
-                    i--;
-                }
-            }
-            return p_sources;
-        }
-
-        @Override
-        public List<P_Source> getP_SourceByUrl(String url) throws RemoteException {
-            List<P_Source> p_sources = new ArrayList<>();
-            p_sources = DataSupport.findAll(P_Source.class);
-            for (int i = 0; i < p_sources.size(); i++) {
-                P_Source p_source = p_sources.get(i);
-                if ((!p_source.getUrl().contains(url))) {
-                    p_sources.remove(i);
-                    i--;
-                }
-            }
-
-            return p_sources;
-        }
-
-        @Override
-        public PermissionHelper getP_OperatorBySourceId(long id) throws RemoteException {
-            PermissionHelper permissionHelper = new PermissionHelper();
-            LinkedHashMap<Long, P_Operator> pOperatorMap = new LinkedHashMap<>();
-            List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", id + "").order("id asc").find(P_SourceOperator.class);
-            for (P_SourceOperator p_sourceOperator :
-                    p_sourceOperators) {
-                Log.d("zw", "service sourceoperateid " + p_sourceOperator.getId());
-                P_Operator p_operator = DataSupport.find(P_Operator.class, p_sourceOperator.getP_operator_id());
-                pOperatorMap.put(p_sourceOperator.getId(), p_operator);
-            }
-            permissionHelper.setP_operatorMap(pOperatorMap);
-            return permissionHelper;
-        }
-
-        @Override
-        public boolean isOperate(long sourceoperateid, long userTypeId) throws RemoteException {
-            List<P_UserTypePermission> p_userPermissions = DataSupport.where("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "").find(P_UserTypePermission.class);
-            if (p_userPermissions.size() == 0) {
-                return false;
-            } else {
-                if (p_userPermissions.get(0).getRighttype() == 1) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-        }
-
-        @Override
-        public void deletePermission(long sourceoperateid, long userTypeId) throws RemoteException {
-            DataSupport.deleteAll(P_UserTypePermission.class, "p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
-
-        }
-
-        @Override
-        public void addPermission(long sourceoperateid, long userTypeId) throws RemoteException {
-            P_UserTypePermission p_userTypePermission = new P_UserTypePermission();
-            p_userTypePermission.setP_sourceoperator_id(sourceoperateid);
-            p_userTypePermission.setUsertype(userTypeId);
-            p_userTypePermission.setRighttype(1);
-            p_userTypePermission.saveOrUpdate("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
-        }
 
         @Override
         public boolean canAddType(String typeName) throws RemoteException {
@@ -1020,56 +805,6 @@ public class MotorServices extends Service {
             }
         }
 
-        @Override
-        public Permission getPermissonByUrl(String url, boolean isRoot) throws RemoteException {
-            Permission permission = new Permission();
-            LinkedHashMap<String, Boolean> linkedHashMap = new LinkedHashMap<>();
-            List<P_Source> p_sources = new ArrayList<>();
-            p_sources = DataSupport.findAll(P_Source.class);
-            for (int i = 0; i < p_sources.size(); i++) {
-                P_Source p_source = p_sources.get(i);
-                if (isRoot) {
-                    if (p_source.getUrl().contains("/")) {
-                        p_sources.remove(i);
-                        i--;
-                    }
-                } else {
-                    if (!p_source.getUrl().contains(url + "/")) {
-                        p_sources.remove(i);
-                        i--;
-                    }
-                }
-            }
-            for (P_Source p_source : p_sources
-                    ) {
-                List<P_SourceOperator> p_sourceOperators = DataSupport.where("p_source_id = ?", p_source.getId() + "").find(P_SourceOperator.class);
-                for (P_SourceOperator sourceOperator : p_sourceOperators
-                        ) {
-                    List<P_Operator> p_operators = DataSupport.
-                            where("id = ?", sourceOperator.getP_operator_id() + "").find(P_Operator.class);
-                    List<P_UserTypePermission> p_userTypePermissions = DataSupport.where("p_sourceoperator_id = ? and usertype = ?", sourceOperator.getId() + "", typeId + "").find(P_UserTypePermission.class);
-                    linkedHashMap.put(p_source.getTitle() + p_operators.get(0).getTitle(), !p_userTypePermissions.isEmpty());
-                    Log.d("zw", p_source.getTitle() + " " + p_operators.get(0).getTitle() + " " + !p_userTypePermissions.isEmpty());
-
-                }
-            }
-            permission.setPermissiondata(linkedHashMap);
-            return permission;
-        }
-
-        @Override
-        public List<P_Source> getAllP_Source() throws RemoteException {
-            List<P_Source> p_sources = new ArrayList<>();
-            p_sources = DataSupport.findAll(P_Source.class);
-            return p_sources;
-        }
-
-        @Override
-        public List<P_Operator> getAllP_Operator() throws RemoteException {
-            List<P_Operator> p_operators = new ArrayList<>();
-            p_operators = DataSupport.findAll(P_Operator.class);
-            return p_operators;
-        }
 
         @Override
         public List<DevParam> getDevParamByType(int type) throws RemoteException {
@@ -1163,7 +898,6 @@ public class MotorServices extends Service {
 
         @Override
         public void operateLight(boolean isOn) throws RemoteException {
-//            Log.d("TAGZW", "BOO " + isOn);
             if (isOn) {
                 mlMotorUtil.getMlMotor().motorLightOn();
             } else {
@@ -1209,21 +943,38 @@ public class MotorServices extends Service {
             return DataSupport.findBySQL("select * from " + name).getCount();
         }
 
+        @Override
+        public void OperateReportInfo(List<String> reportIds, String type) throws RemoteException {
+            Log.d("zw", "OperateReportInfo " + type);
+            if (type.trim().equals(CommonUtil.OPERATEREPORT_DELETE)) {
+                Log.d("zw", "delete ids " + reportIds);
+                for (String s :
+                        reportIds) {
+
+                    if (!DataSupport.where("id = ?", s).find(DetectionReport.class).get(0).ispdfdown()) {
+                        alertDialog.callback("数据不完整", "");
+                        return;
+                    }
+                }
+                for (String s :
+                        reportIds) {
+                    DataSupport.delete(DetectionReport.class, Long.parseLong(s.trim()));
+                }
+                alertDialog.callback("删除成功", "updateui");
+            }
+            if (type.trim().equals(CommonUtil.OPERATEREPORT_OUTPUT)) {
+                Log.d("zw", "导出数据");
+                Log.d("zw", reportIds.toString());
+                pdfUtil.startOutput(reportIds, handler);
+            }
+        }
+
 
     };
 
     @Override
     public IBinder onBind(Intent intent) {
-        mlMotorUtil = MlMotorUtil.getInstance(this);
-        alertDialog = new AlertDialog();
-        alertDialog.setContext(this);
-        handler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                alertDialog.callback("自动检测完成");
-            }
-        };
+        initData();
         Connector.getDatabase();
         if (!DataSupport.isExist(UserType.class)) {
             UserType userType = new UserType();
@@ -1518,6 +1269,29 @@ public class MotorServices extends Service {
         return mBinder;
     }
 
+    private void initData() {
+        mlMotorUtil = MlMotorUtil.getInstance(this);
+        alertDialog = new AlertDialog();
+        alertDialog.setContext(this);
+        pdfUtil = PdfUtil.getInstance(this);
+        permissionUtil = PermissionUtil.getInstance(this);
+        handler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                switch (msg.what) {
+                    case 1:
+                        alertDialog.callback("自动检测完成", "");
+                        break;
+                    case PdfUtil.SUCESS:
+                        alertDialog.callback("数据导出完成", "");
+                }
+
+            }
+        };
+
+    }
+
     private void executeAssetsSQL(SQLiteDatabase db, String schemaName) {
         BufferedReader in = null;
         try {
@@ -1585,7 +1359,7 @@ public class MotorServices extends Service {
         int currentDate = Integer.parseInt(currentTime);
         if (currentDate > lastDate) {
             result = currentTime + "001";
-        } else {
+        } else if (currentDate == lastDate) {
             int current = Integer.parseInt(lastDetNum.getParamValue()) + 1;
             if (current < 10) {
                 result = currentTime + "00" + current;
@@ -1594,115 +1368,12 @@ public class MotorServices extends Service {
             } else {
                 result = currentTime + current;
             }
+        } else if (currentDate < lastDate) {
+            result = (Integer.parseInt(lastDetNum.getParamValue()) + 1) + "";
         }
         return result;
     }
 
-
-    /**
-     * 模拟检测药品数据
-     *
-     * @param i
-     * @param checkNum
-     * @param isFirst
-     * @param reportid
-     * @param detectionSn
-     * @throws JSONException
-     */
-    public synchronized void simulatieDate(int i, int checkNum, boolean isFirst, long reportid, String detectionSn) throws JSONException {
-        DetectionDetail detectionDetail = new DetectionDetail();
-        detectionDetail.setDetectionreport_id(reportid);
-        detectionDetail.setPositive(i % 2 == 0 ? true : false);
-        detectionDetail.setColorFactor(150);
-        detectionDetail.setScrTime(4.0);
-        detectionDetail.setStpTime(3.0);
-        detectionDetail.setScrTimeText("正常");
-        detectionDetail.setStpTimeText("正常");
-        detectionDetail.setData1(0.1);
-        detectionDetail.setData2(0.3);
-        detectionDetail.setData3(0.3);
-        detectionDetail.setData4(0.3);
-        detectionDetail.setVideo("test.mp4");
-        detectionDetail.setVideoMd5("sadasdqqw");
-        detectionDetail.setValid(false);
-        if (isFirst) {
-            detectionDetail.setDetIndex(i + 1);
-        } else {
-            detectionDetail.setRepIndex(i + 1);
-        }
-        JSONObject jsonObject = new JSONObject();
-        setNodeInfo(jsonObject, i);
-        detectionDetail.setNodeInfo(jsonObject.toString());
-        Log.d("zw", "out " + detectionDetail.getDetectionreport_id());
-        detectionDetail.save();
-
-        if (intent == null) {
-            intent = new Intent();
-        }
-        intent.setAction("com.checkfinsh");
-        if ((checkNum - 1) == i) {
-            if (isFirst) {
-                intent.putExtra("state", "finish");
-            } else {
-                intent.putExtra("state", "secondfinish");
-            }
-        } else {
-            intent.putExtra("state", "process");
-        }
-        sendBroadcast(intent);
-    }
-
-    private void setNodeInfo(JSONObject jsonObject, int i) {
-        JSONObject floatdata = new JSONObject();
-        JSONObject glassprecent = new JSONObject();
-        JSONObject glasstime = new JSONObject();
-        JSONObject max = new JSONObject();
-        JSONObject min = new JSONObject();
-        JSONObject supers = new JSONObject();
-        JSONObject statistics40 = new JSONObject();
-        JSONObject statistics50 = new JSONObject();
-        JSONObject statistics60 = new JSONObject();
-        JSONObject statistics70 = new JSONObject();
-        try {
-            floatdata.put("name", "漂浮物检出次数(次)");
-            floatdata.put("data", i);
-            floatdata.put("result", "阴性");
-            glassprecent.put("name", "速降物检出率(%)");
-            glassprecent.put("data", 0);
-            glassprecent.put("result", "阳性");
-            glasstime.put("name", "速降物时间比例(%)");
-            glasstime.put("data", 1.62);
-            max.put("name", "50-70um异物检出数(颗)");
-            max.put("data", 2);
-            min.put("name", "40-50um异物检出数(颗)");
-            min.put("data", 3);
-            min.put("result", "阴性");
-            supers.put("name", "70um以上异物检出数(颗)");
-            supers.put("data", 3);
-            supers.put("result", "阴性");
-            statistics40.put("name", "40-50um异物检出率(%)");
-            statistics40.put("data", 2);
-            statistics40.put("result", "阴性");
-            statistics50.put("name", "50-60um异物检出率(%)");
-            statistics50.put("data", 2);
-            statistics60.put("name", "60-70um异物检出率(%)");
-            statistics60.put("data", 2);
-            statistics70.put("name", "70um以上异物检出率(%)");
-            statistics70.put("data", 2);
-            jsonObject.put("floatdta", floatdata);
-            jsonObject.put("glassprecent", glassprecent);
-            jsonObject.put("glasstime", glasstime);
-            jsonObject.put("max", max);
-            jsonObject.put("min", min);
-            jsonObject.put("super", supers);
-            jsonObject.put("statistics40", statistics40);
-            jsonObject.put("statistics50", statistics50);
-            jsonObject.put("statistics60", statistics60);
-            jsonObject.put("statistics70", statistics70);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void addPermission(long sourceoperateid, long userTypeId) throws RemoteException {
         P_UserTypePermission p_userTypePermission = new P_UserTypePermission();
@@ -1712,15 +1383,5 @@ public class MotorServices extends Service {
         p_userTypePermission.saveOrUpdate("p_sourceoperator_id = ? and usertype = ?", sourceoperateid + "", userTypeId + "");
     }
 
-    public void addAudittrail(int event_id, int info_id, String value, String mark) throws RemoteException {
-        AuditTrail auditTrail = new AuditTrail();
-        auditTrail.setTime(audittraformat.format(new Date()));
-        auditTrail.setUsername(user_id);
-        auditTrail.setEvent_id(event_id);
-        auditTrail.setInfo_id(info_id);
-        auditTrail.setValue(value);
-        auditTrail.setMark(mark);
-        auditTrail.setUserauto_id(0);
-        auditTrail.save();
-    }
+
 }
