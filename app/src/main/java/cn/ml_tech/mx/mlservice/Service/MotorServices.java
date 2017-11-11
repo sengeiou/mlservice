@@ -47,7 +47,10 @@ import cn.ml_tech.mx.mlservice.DAO.Modern;
 import cn.ml_tech.mx.mlservice.DAO.MotorControl;
 import cn.ml_tech.mx.mlservice.DAO.P_Module;
 import cn.ml_tech.mx.mlservice.DAO.P_Operator;
+import cn.ml_tech.mx.mlservice.DAO.P_Source;
+import cn.ml_tech.mx.mlservice.DAO.P_SourceOperator;
 import cn.ml_tech.mx.mlservice.DAO.P_UserTypePermission;
+import cn.ml_tech.mx.mlservice.DAO.PermissionHelper;
 import cn.ml_tech.mx.mlservice.DAO.SpecificationType;
 import cn.ml_tech.mx.mlservice.DAO.SystemConfig;
 import cn.ml_tech.mx.mlservice.DAO.Tray;
@@ -223,10 +226,16 @@ public class MotorServices extends Service {
 
         @Override
         public List<User> getUserList() throws RemoteException {
-            List<User> list = new ArrayList<User>();
-            Connector.getDatabase();
-            List<User> listDao = DataSupport
-                    .findAll(User.class);
+            List<User> listDao = new ArrayList<>();
+            if (!permissionUtil.checkPermission(2, 20, typeId)) {
+                alertDialog.callback("暂无权限查询", "");
+                return listDao;
+            }
+            if (permissionUtil.checkPermission(9, 20, typeId)) {
+                listDao = DataSupport.where("id = ?", userid + "").find(User.class);
+                return listDao;
+            }
+            listDao = DataSupport.where("usertype_id >= ?", typeId + "").find(User.class);
             return listDao;
         }
 
@@ -302,6 +311,15 @@ public class MotorServices extends Service {
 
         @Override
         public void getTrayIcId(int type) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 21, typeId)) {
+                alertDialog.callback("无权执行", "");
+                return;
+            }
+            if (!permissionUtil.checkPermission(3, 21, typeId)) {
+                alertDialog.callback("暂无权限增加", "");
+                return;
+            }
+
             if (intent == null)
                 intent = new Intent();
             mlMotorUtil.getTrayId(alertDialog, intent, type);
@@ -322,12 +340,35 @@ public class MotorServices extends Service {
 
         @Override
         public boolean setTray(Tray tray) throws RemoteException {
+
+            if (!permissionUtil.checkPermission(8, 21, typeId) && tray.getId() == 0) {
+                alertDialog.callback("暂无权限执行", "");
+                return false;
+            }
+
+            if (!permissionUtil.checkPermission(3, 21, typeId) && tray.getId() == 0) {
+                alertDialog.callback("暂无权限增加", "");
+                return false;
+            }
+            if (!permissionUtil.checkPermission(4, 21, typeId) && tray.getId() != 0) {
+                alertDialog.callback("暂无权限修改", "");
+                return false;
+            }
+
             tray.saveOrUpdate("displayId=?", String.valueOf(tray.getDisplayId()));
             return tray.isSaved();
         }
 
         @Override
         public boolean delTray(Tray tray) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 21, typeId)) {
+                alertDialog.callback("无权执行", "");
+                return false;
+            }
+            if (!permissionUtil.checkPermission(5, 21, typeId)) {
+                alertDialog.callback("暂无权限删除", "");
+                return false;
+            }
             int r = 0;
             r = DataSupport.deleteAll(Tray.class, "displayId=? and icId=?", String.valueOf(tray.getDisplayId()), tray.getIcId());
             if (r > 0) return true;
@@ -661,6 +702,24 @@ public class MotorServices extends Service {
 
         @Override
         public void updateUser(User user) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 20, typeId)) {
+                alertDialog.callback("无权操作", "");
+                return;
+            }
+            if (user.getId() != userid) {
+                if (permissionUtil.checkPermission(9, 20, typeId)) {
+                    alertDialog.callback("仅能操作自身账号", "");
+                    return;
+                }
+            }
+            if (user.getId() == 0 && !permissionUtil.checkPermission(3, 20, typeId)) {
+                alertDialog.callback("暂无权限增加", "");
+                return;
+            }
+            if (user.getId() != 0 && !permissionUtil.checkPermission(4, 20, typeId)) {
+                alertDialog.callback("暂无权限修改", "");
+                return;
+            }
             if (user.getId() != 0) {
                 user.saveOrUpdate("id = ?", user.getId() + "");
             } else {
@@ -679,7 +738,24 @@ public class MotorServices extends Service {
 
         @Override
         public void deleteUserById(long id) throws RemoteException {
-            Log.d("zw", "service delete user " + id);
+            if (!permissionUtil.checkPermission(8, 20, typeId)) {
+                alertDialog.callback("无权操作", "");
+                return;
+            }
+            if (id != userid) {
+                if (permissionUtil.checkPermission(9, 20, typeId)) {
+                    alertDialog.callback("仅能操作自身账号", "");
+                    return;
+                }
+            }
+            if (!permissionUtil.checkPermission(5, 20, typeId)) {
+                alertDialog.callback("暂无删除权限", "");
+                return;
+            }
+            if (id == userid) {
+                alertDialog.callback("无法删除自身账号", "");
+                return;
+            }
             DataSupport.delete(User.class, id);
         }
 
@@ -726,7 +802,7 @@ public class MotorServices extends Service {
             while (cursor.moveToNext()) {
                 field.add(cursor.getString(cursor.getColumnIndex("name")));
             }
-            cursor = DataSupport.findBySQL("select * from " + tableName + " limit 15 offset " + (page - 1) * 15);
+            cursor = DataSupport.findBySQL("select * from " + tableName + " limit 12 offset " + (page - 1) * 12);
             int i = 0;
             while (cursor.moveToNext()) {
                 List<String> data = new ArrayList<>();
@@ -966,6 +1042,43 @@ public class MotorServices extends Service {
                 Log.d("zw", "导出数据");
                 Log.d("zw", reportIds.toString());
                 pdfUtil.startOutput(reportIds, handler);
+            }
+        }
+
+        @Override
+        public List<PermissionHelper> getPermissionInfoByType(int userTypeId) throws RemoteException {
+            List<PermissionHelper> permissionHelpers = new ArrayList<>();
+            List<P_SourceOperator> p_sourceOperators = DataSupport.findAll(P_SourceOperator.class);
+            if (p_sourceOperators != null && p_sourceOperators.size() != 0) {
+                for (P_SourceOperator p_sourceOperator :
+                        p_sourceOperators) {
+                    PermissionHelper permissionHelper = new PermissionHelper();
+                    permissionHelper.setP_sourceOperator(p_sourceOperator);
+                    permissionHelper.setUserTypeId(userTypeId);
+                    permissionHelper.setCanOperate(permissionUtil.checkPermission(p_sourceOperator.getP_operator_id(),
+                            p_sourceOperator.getP_source_id(), userTypeId));
+                    permissionHelpers.add(permissionHelper);
+                }
+            }
+            return permissionHelpers;
+        }
+
+        @Override
+        public void operatePermission(long operateId, long sourcesId, long userTypeId, boolean isAdd) throws RemoteException {
+            if (isAdd) {
+                permissionUtil.operatePermission(operateId, sourcesId, userTypeId, PermissionUtil.TYPE.ADD);
+            } else {
+                permissionUtil.operatePermission(operateId, sourcesId, userTypeId, PermissionUtil.TYPE.DELETE);
+            }
+            String sourceTitle = DataSupport.find(P_Source.class, sourcesId).getTitle();
+            String operateTitle = DataSupport.find(P_Operator.class, operateId).getTitle();
+            String userTypeName = DataSupport.where("typeid = ?", userTypeId + "").find(UserType.class).get(0).getTypeName();
+            if (permissionUtil.checkPermission(operateId, sourcesId, userTypeId)) {
+                Log.d("zw", "用户类型: " + userTypeName + " 资源类型: " + sourceTitle + " 操作类型: " + operateTitle + " " +
+                        "权限添加成功");
+            } else {
+                Log.d("zw", "用户类型: " + userTypeName + " 资源类型: " + sourceTitle + " 操作类型: " + operateTitle + " " +
+                        "权限删除成功");
             }
         }
 

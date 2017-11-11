@@ -111,4 +111,6 @@
         void autoDebug(int type, int num);
         int getNumByTableName(String name);
         void OperateReportInfo(in List<String> reportIds,String type);
+        List<PermissionHelper> getPermissionInfoByType(int userTypeId);
+        void operatePermission( long operateId,  long sourcesId,  long userTypeId, boolean isAdd);
    }

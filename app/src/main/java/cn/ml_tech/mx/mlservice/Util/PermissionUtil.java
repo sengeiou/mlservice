@@ -83,7 +83,7 @@ public class PermissionUtil {
                     List<P_UserTypePermission> p_userTypePermissions =
                           DataSupport.where("p_sourceoperator_id = ? and usertype = ?",
                                     sourceOperateId + "", userTypeId + "").find(P_UserTypePermission.class);
-                    if (p_userTypePermissions == null && p_userTypePermissions.size() == 0) {
+                    if (p_userTypePermissions == null || p_userTypePermissions.size() == 0) {
                         if (type == TYPE.ADD) {
                             P_UserTypePermission p_userTypePermission = new P_UserTypePermission();
                             p_userTypePermission.setRighttype(1);

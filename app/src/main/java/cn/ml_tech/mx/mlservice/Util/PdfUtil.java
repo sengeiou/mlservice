@@ -50,7 +50,7 @@ import cn.ml_tech.mx.mlservice.R;
  * 创建人: zhongwang
  * 功能描述:导出pdf工具类
  */
-
+@SuppressWarnings("ResourceType")
 public class PdfUtil {
     public static final int SUCESS = 88;//成功时handler输出的what
     public static final int FAILURE = 99;//异常时handler输出的what
