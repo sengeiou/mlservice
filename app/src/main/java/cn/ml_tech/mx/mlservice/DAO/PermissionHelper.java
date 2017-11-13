@@ -10,17 +10,9 @@ import android.os.Parcelable;
  */
 
 public class PermissionHelper implements Parcelable {
-    private int userTypeId;
     private P_SourceOperator p_sourceOperator;
     private boolean canOperate;
-
-    public int getUserTypeId() {
-        return userTypeId;
-    }
-
-    public void setUserTypeId(int userTypeId) {
-        this.userTypeId = userTypeId;
-    }
+    private int extra;
 
     public P_SourceOperator getP_sourceOperator() {
         return p_sourceOperator;
@@ -38,6 +30,14 @@ public class PermissionHelper implements Parcelable {
         this.canOperate = canOperate;
     }
 
+    public int getExtra() {
+        return extra;
+    }
+
+    public void setExtra(int extra) {
+        this.extra = extra;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -45,21 +45,21 @@ public class PermissionHelper implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(this.userTypeId);
         dest.writeParcelable(this.p_sourceOperator, flags);
         dest.writeByte(this.canOperate ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.extra);
     }
 
     public PermissionHelper() {
     }
 
     protected PermissionHelper(Parcel in) {
-        this.userTypeId = in.readInt();
         this.p_sourceOperator = in.readParcelable(P_SourceOperator.class.getClassLoader());
         this.canOperate = in.readByte() != 0;
+        this.extra = in.readInt();
     }
 
-    public static final Parcelable.Creator<PermissionHelper> CREATOR = new Parcelable.Creator<PermissionHelper>() {
+    public static final Creator<PermissionHelper> CREATOR = new Creator<PermissionHelper>() {
         @Override
         public PermissionHelper createFromParcel(Parcel source) {
             return new PermissionHelper(source);

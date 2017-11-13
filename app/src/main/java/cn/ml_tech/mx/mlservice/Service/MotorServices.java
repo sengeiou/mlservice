@@ -149,6 +149,14 @@ public class MotorServices extends Service {
 
         @Override
         public boolean addDrugInfo(String name, String enName, String pinYin, int containterId, int factoryId, String id) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 8, typeId)) {
+                alertDialog.callback("无权执行", "");
+                return false;
+            }
+            if (!permissionUtil.checkPermission(3, 8, typeId)) {
+                alertDialog.callback("暂无增加权限", "");
+                return false;
+            }
             DrugInfo drugInfo = new DrugInfo();
             log(name + " " + enName + " " + pinYin + " containerid" + containterId + " factoryId" + factoryId);
             drugInfo.setName(name.trim());
@@ -163,11 +171,21 @@ public class MotorServices extends Service {
                 drugInfo.setId(parseLong(id));
                 drugInfo.saveOrUpdate("id = ?", String.valueOf(drugInfo.getId()));
             }
+            alertDialog.callback("保存成功", "");
             return true;
         }
 
         @Override
         public boolean addFactory(String name, String address, String phone, String fax, String mail, String contactName, String contactPhone, String webSite, String province_code, String city_code, String area_code) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 12, typeId)) {
+                alertDialog.callback("无权执行", "");
+                return false;
+            }
+            if (!permissionUtil.checkPermission(3, 12, typeId)) {
+                alertDialog.callback("暂无增加权限", "");
+                return false;
+            }
+
             Factory factory = new Factory();
             factory.setName(name);
             factory.setAddress(address);
@@ -629,12 +647,20 @@ public class MotorServices extends Service {
 
         @Override
         public void deleteDrugParamById(int id) throws RemoteException {
+            if (!permissionUtil.checkPermission(5, 9, typeId)) {
+                alertDialog.callback("暂无权限删除", "");
+                return;
+            }
             DataSupport.deleteAllAsync(DrugParam.class, "druginfo_id = ? ", String.valueOf(id));
         }
 
 
         @Override
         public void startCheck(int drug_id, final int checkNum, int rotateNum, final String detectionNumber, String detectionBatch, final boolean isFirst, final String detectionSn) throws RemoteException {
+            if (!permissionUtil.checkPermission(8, 10, typeId)) {
+                alertDialog.callback("无权执行", "check");
+                return;
+            }
             mlMotorUtil.checkDrug(drug_id, checkNum, rotateNum, detectionNumber,
                     detectionBatch, isFirst, detectionSn, userid
                     , user_id, CommonUtil.AUTOEBUG_CHECK);
@@ -1010,6 +1036,9 @@ public class MotorServices extends Service {
         @Override
         public void autoDebug(int type, int num) throws RemoteException {
             Log.d("zw", "server autoDebug");
+            if (!permissionUtil.checkPermission(8, 1, typeId)) {
+                alertDialog.callback("无权执行", "");
+            }
             mlMotorUtil.autoCheck(handler, type, num);
 
         }
@@ -1039,6 +1068,14 @@ public class MotorServices extends Service {
                 alertDialog.callback("删除成功", "updateui");
             }
             if (type.trim().equals(CommonUtil.OPERATEREPORT_OUTPUT)) {
+                if (!permissionUtil.checkPermission(8, 11, typeId)) {
+                    alertDialog.callback("无权执行", "");
+                }
+                if (!permissionUtil.checkPermission(6, 11, typeId)) {
+                    alertDialog.callback("暂无权限导出", "");
+                    return;
+                }
+
                 Log.d("zw", "导出数据");
                 Log.d("zw", reportIds.toString());
                 pdfUtil.startOutput(reportIds, handler);
@@ -1054,7 +1091,6 @@ public class MotorServices extends Service {
                         p_sourceOperators) {
                     PermissionHelper permissionHelper = new PermissionHelper();
                     permissionHelper.setP_sourceOperator(p_sourceOperator);
-                    permissionHelper.setUserTypeId(userTypeId);
                     permissionHelper.setCanOperate(permissionUtil.checkPermission(p_sourceOperator.getP_operator_id(),
                             p_sourceOperator.getP_source_id(), userTypeId));
                     permissionHelpers.add(permissionHelper);
@@ -1080,6 +1116,46 @@ public class MotorServices extends Service {
                 Log.d("zw", "用户类型: " + userTypeName + " 资源类型: " + sourceTitle + " 操作类型: " + operateTitle + " " +
                         "权限删除成功");
             }
+        }
+
+        @Override
+        public List<PermissionHelper> getPermissionInfo() throws RemoteException {
+            List<PermissionHelper> permissionHelpers = new ArrayList<>();
+            List<P_SourceOperator> p_sourceOperators = DataSupport.findAll(P_SourceOperator.class);
+            if (p_sourceOperators != null && p_sourceOperators.size() != 0) {
+                for (P_SourceOperator p_sourceOperator :
+                        p_sourceOperators) {
+                    PermissionHelper permissionHelper = new PermissionHelper();
+                    permissionHelper.setP_sourceOperator(p_sourceOperator);
+                    permissionHelper.setCanOperate(false);
+                    permissionHelpers.add(permissionHelper);
+                }
+            }
+            return permissionHelpers;
+        }
+
+        @Override
+        public boolean isRename(String name) throws RemoteException {
+            return DataSupport.where("typename = ?", name).find(UserType.class).size() == 0 ? false : true;
+        }
+
+        @Override
+        public void addNewUserType(String typeName, List<PermissionHelper> permissionHelpers) throws RemoteException {
+            UserType userType = new UserType();
+            userType.setTypeName(typeName);
+            userType.setTypeId(DataSupport.findLast(UserType.class).getTypeId() + 1);
+            userType.save();
+            long userTypeId = userType.getTypeId();
+            for (PermissionHelper permissionHelper : permissionHelpers) {
+                if (permissionHelper.isCanOperate()) {
+                    permissionUtil.operatePermission(permissionHelper.getP_sourceOperator().getP_operator_id(),
+                            permissionHelper.getP_sourceOperator().getP_source_id(), userTypeId, PermissionUtil.TYPE.ADD);
+                } else {
+                    permissionUtil.operatePermission(permissionHelper.getP_sourceOperator().getP_operator_id(),
+                            permissionHelper.getP_sourceOperator().getP_source_id(), userTypeId, PermissionUtil.TYPE.DELETE);
+                }
+            }
+            alertDialog.callback("用户类型添加成功", "initAddType");
         }
 
 

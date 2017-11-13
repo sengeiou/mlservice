@@ -69,8 +69,15 @@ public class MainActivity extends AppCompatActivity {
             verSionUtil = new VerSionUtil(this);
             verSionUtil.updateVersion();
         }
-        addReportInfo();
-        pdfUtil = PdfUtil.getInstance(this);
+
+        new Thread() {
+            @Override
+            public void run() {
+                super.run();
+                addReportInfo();
+            }
+        }.start();
+//        pdfUtil = PdfUtil.getInstance(this);
 //        List<String>ids = new ArrayList<>();
 //        ids.add("15");
 //        pdfUtil.startOutput(ids,handler);

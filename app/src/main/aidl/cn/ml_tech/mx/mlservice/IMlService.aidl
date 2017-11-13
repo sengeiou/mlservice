@@ -113,4 +113,7 @@
         void OperateReportInfo(in List<String> reportIds,String type);
         List<PermissionHelper> getPermissionInfoByType(int userTypeId);
         void operatePermission( long operateId,  long sourcesId,  long userTypeId, boolean isAdd);
+        List<PermissionHelper> getPermissionInfo();
+        boolean isRename(String name);
+        void addNewUserType(String typeName, in List<PermissionHelper> permissionHelpers);
    }
