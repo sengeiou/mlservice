@@ -157,7 +157,7 @@ public class MlMotor {
 
     public static native void motorControl(ReportDataVal reportDataVal);// TODO: 2017/8/23 电机控制
 
-    public static native void motorReadReg(ReportDataReg reportDataReg);//// TODO: 2017/8/23 都寄存器
+    public static native void motorReadReg(ReportDataReg reportDataReg);// TODO: 2017/8/23 都寄存器
 
     public static native void motorWriteReg(ReportDataReg reportDataReg);// TODO: 2017/8/23 写寄存器
 
@@ -253,4 +253,5 @@ public class MlMotor {
     public static native void motorLedPowerOff();// TODO: 2017/8/23  仪器电源led灯
 
     public static native void motorGetVersion(ReportDataReg reportDataReg);
+
 }

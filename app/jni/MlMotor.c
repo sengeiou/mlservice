@@ -22,7 +22,6 @@ extern "C" {
 #include <fcntl.h>
 
 
-
 /*寄存器数据结构*/
 struct reg_val
 {

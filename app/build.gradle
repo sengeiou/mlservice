@@ -4,15 +4,16 @@ android {
     buildToolsVersion '26.0.2'
     defaultConfig {
         applicationId "cn.ml_tech.mx.mlservice"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndk {
             moduleName "JniTest"
-            ldLibs "log", "z", "m"
+            ldLibs "log", "z", "m", "jnigraphics"
             abiFilters "armeabi", "armeabi-v7a", "x86"
+
         }
     }
     buildTypes {
@@ -26,17 +27,22 @@ android {
             }
         }
     }
-}
 
+
+}
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
     compile 'com.android.support:appcompat-v7:25.2.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.1'
-    testCompile 'junit:junit:4.12'
     compile 'org.litepal.android:core:1.5.1'
     compile 'com.squareup.okhttp3:okhttp:3.8.1'
     compile files('libs/itextpdf-5.5.5.jar')
+}
+buildscript {
+    repositories {
+        mavenCentral() // or jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.3.2'   //last version Jan 2016
+    }
 }

@@ -99,6 +99,21 @@ public class MlMotorUtil {
         return stateHandler;
     }
 
+    public void motorWriteReg(int address, int value) {
+        reportDataReg.setUsReg(address);
+        reportDataReg.setUcRegValue(value);
+        mlMotor.motorWriteReg(reportDataReg);
+    }
+
+    public MlMotor.ReportDataState motorQueryState(int dateType) {
+        MlMotor.ReportDataState reportDataState = new MlMotor.ReportDataState(new int[8], dateType);
+        reportDataState.setDataType(dateType);
+        mlMotor.motorQueryState(reportDataState);
+        return reportDataState;
+    }
+
+    ;
+
     private boolean isFirst;
     private String detectionSn;
     private Handler stateHandler = new Handler() {
@@ -385,7 +400,7 @@ public class MlMotorUtil {
                     i++;
                     if (i > 20000) {
                         operateRotale(0);
-                        alertDialog.callback("读取托环失败","");
+                        alertDialog.callback("读取托环失败", "");
                         break;
                     }
                     try {
@@ -413,7 +428,7 @@ public class MlMotorUtil {
                                     case TRAYID_RADIO:
                                         List<Tray> trayList = DataSupport.where("icid=?", res + "").find(Tray.class);
                                         if (trayList == null || trayList.size() == 0) {
-                                            alertDialog.callback("托环信息不匹配","");
+                                            alertDialog.callback("托环信息不匹配", "");
                                         } else {
                                             intent.setAction("com.trayradio");
                                             intent.putExtra("info", (int) trayList.get(0).getDiameter() + "");

@@ -21,6 +21,14 @@ public class SerialPort {
     private FileInputStream mFileInputStream;
     private FileOutputStream mFileOutputStream;
 
+    public FileDescriptor getmFd() {
+        return mFd;
+    }
+
+    public void setmFd(FileDescriptor mFd) {
+        this.mFd = mFd;
+    }
+
     public SerialPort(File device, int baudrate, int flags) throws SecurityException, IOException {
         /* Check access permission */
 
@@ -41,7 +49,7 @@ public class SerialPort {
                 throw new SecurityException();
             }
         }
-
+        Log.d("zww",device.getAbsolutePath());
         mFd = open(device.getAbsolutePath(), baudrate, flags);
         if (mFd == null) {
             Log.e(TAG, "native open returns null");

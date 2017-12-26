@@ -85,6 +85,8 @@ public class MotorServices extends Service {
     private long typeId;
     private Handler handler;
     private PdfUtil pdfUtil;
+    private List<P_SourceOperator> p_sourceOperators;
+    private Cursor cursor;
 
     public MotorServices() {
         initMemberData();
@@ -119,6 +121,8 @@ public class MotorServices extends Service {
     public List<DrugControls> mDrugControls = new ArrayList<>();
 
     private final IMlService.Stub mBinder = new IMlService.Stub() {
+
+
         @Override
         public void addMotorControl(MotorControl mControl) throws RemoteException {
             log("Received addMotorControl.");
@@ -1128,6 +1132,40 @@ public class MotorServices extends Service {
                     PermissionHelper permissionHelper = new PermissionHelper();
                     permissionHelper.setP_sourceOperator(p_sourceOperator);
                     permissionHelper.setCanOperate(false);
+                    permissionHelpers.add(permissionHelper);
+                }
+            }
+            return permissionHelpers;
+        }
+
+        @Override
+        public List<PermissionHelper> getPermissionByType(long parentId) throws RemoteException {
+            List<PermissionHelper> permissionHelpers = new ArrayList<>();
+            if (p_sourceOperators == null)
+                p_sourceOperators = new ArrayList<>();
+            p_sourceOperators.clear();
+            if (parentId != 0) {
+                cursor = DataSupport.findBySQL("select * from p_sourceoperator where " +
+                        "p_source_id in (select id from p_source where parentid = " + parentId + ") and " +
+                        "p_operator_id = 1 order by p_source_id asc");
+            } else {
+                cursor = DataSupport.findBySQL("select * from p_sourceoperator where " +
+                        "p_source_id in (select id from p_source where url not like '%/%') and " +
+                        "p_operator_id = 1 order by id asc");
+            }
+            while (cursor.moveToNext()) {
+                P_SourceOperator p_sourceOperator = new P_SourceOperator();
+                p_sourceOperator.setId(cursor.getLong(cursor.getColumnIndex("id")));
+                p_sourceOperator.setP_operator_id(cursor.getLong(cursor.getColumnIndex("p_operator_id")));
+                p_sourceOperator.setP_source_id(cursor.getLong(cursor.getColumnIndex("p_source_id")));
+                p_sourceOperators.add(p_sourceOperator);
+            }
+            if (p_sourceOperators != null && p_sourceOperators.size() != 0) {
+                for (P_SourceOperator p_sourceOperator :
+                        p_sourceOperators) {
+                    PermissionHelper permissionHelper = new PermissionHelper();
+                    permissionHelper.setP_sourceOperator(p_sourceOperator);
+                    permissionHelper.setCanOperate(permissionUtil.checkPermission(p_sourceOperator.getP_operator_id(), p_sourceOperator.getP_source_id(), typeId));
                     permissionHelpers.add(permissionHelper);
                 }
             }

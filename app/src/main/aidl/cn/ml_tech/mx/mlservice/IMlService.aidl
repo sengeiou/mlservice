@@ -114,6 +114,8 @@
         List<PermissionHelper> getPermissionInfoByType(int userTypeId);
         void operatePermission( long operateId,  long sourcesId,  long userTypeId, boolean isAdd);
         List<PermissionHelper> getPermissionInfo();
+        List<PermissionHelper> getPermissionByType(long parentId);
         boolean isRename(String name);
         void addNewUserType(String typeName, in List<PermissionHelper> permissionHelpers);
+
    }
