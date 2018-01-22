@@ -135,8 +135,7 @@ public class MotorServices extends Service {
 
         @Override
         public boolean checkAuthority(String name, String password) throws RemoteException {
-            log(name);
-            log(password);
+
             List<cn.ml_tech.mx.mlservice.DAO.User> users = where("userName = ? and userPassword = ?", name, password).find(cn.ml_tech.mx.mlservice.DAO.User.class);
             log(users.size() + "userssize");
             if (users.size() != 0) {

@@ -36,7 +36,9 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.1'
     compile 'org.litepal.android:core:1.5.1'
     compile 'com.squareup.okhttp3:okhttp:3.8.1'
+    compile 'com.google.code.gson:gson:2.6.2'
     compile files('libs/itextpdf-5.5.5.jar')
+
 }
 buildscript {
     repositories {
