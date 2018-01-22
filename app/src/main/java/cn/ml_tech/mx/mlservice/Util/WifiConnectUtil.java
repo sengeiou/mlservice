@@ -15,8 +15,6 @@ import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import cn.ml_tech.mx.mlservice.DAO.MobileUser;
-import cn.ml_tech.mx.mlservice.DAO.User;
 import cn.ml_tech.mx.mlservice.base.MlServerApplication;
 import cn.ml_tech.mx.mlservice.base.SocketModule;
 
@@ -38,6 +36,7 @@ public class WifiConnectUtil {
     private InputStream inputStream;
     private Gson gson;
     private Operate operate;
+
     public WifiConnectUtil(Context context) {
         this.context = context;
         mlServerApplication = (MlServerApplication) context.getApplicationContext();
@@ -83,6 +82,11 @@ public class WifiConnectUtil {
         return wifiConnectUtil;
     }
 
+    /**
+     * 开始检测移动端发出的指令
+     *
+     * @param operate
+     */
     public void startObserver(Operate operate) {
         this.operate = operate;
         LogUtil.out(LogUtil.Debug, "startObserver");
@@ -90,15 +94,15 @@ public class WifiConnectUtil {
             @Override
             public void run() {
                 super.run();
-                int num, te = 0;
-                while (true) {
+                 while (true) {
                     try {
                         if (inputStream != null) {
                             if (inputStream.available() != 0) {
                                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                                 String res = bufferedReader.readLine();
+                                LogUtil.out(LogUtil.Debug, res);
                                 SocketModule socketModule = gson.fromJson(res, SocketModule.class);
-                               handlerOperate(socketModule);
+                                handlerOperate(socketModule);
                             }
                         }
                     } catch (IOException e) {
@@ -111,17 +115,27 @@ public class WifiConnectUtil {
     }
 
 
+    /**
+     * 处理操作类型
+     *
+     * @param socketModule
+     */
     private void handlerOperate(SocketModule socketModule) {
-       String operateType = socketModule.getOperateType();
-        switch (operateType){
+        String operateType = socketModule.getOperateType();
+        Object operateResult = null;
+        switch (operateType) {
             case MlConCommonUtil.LOGIN:
-                socketModule =  operate.login(socketModule);
+                operateResult = operate.login(socketModule);
+                socketModule.setBaseModule(gson.toJson(operateResult));
         }
-      String res =  gson.toJson(socketModule);
+        String res = gson.toJson(socketModule);
+        LogUtil.out(LogUtil.Debug,"获取数据完成，响应移动端进行中");
         printWriter.println(res);
+        LogUtil.out(LogUtil.Debug,"数据发送完成");
+
     }
 
-    public interface Operate{
-         SocketModule login(SocketModule socketModule);
+    public interface Operate {
+        Object login(SocketModule socketModule);
     }
 }

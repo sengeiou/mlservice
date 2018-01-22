@@ -6,8 +6,8 @@
     android:layout_height="match_parent"
     tools:context="cn.ml_tech.mx.mlservice.Activity.MainActivity">
 
-<TextView
-    android:id="@+id/ids"
-    android:layout_width="wrap_content"
+<Button
+    android:id="@+id/finish"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content" />
 </RelativeLayout>

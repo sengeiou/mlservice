@@ -5,10 +5,14 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import cn.ml_tech.mx.mlservice.DAO.MobileUser;
+import com.google.gson.Gson;
+
 import cn.ml_tech.mx.mlservice.Util.LogUtil;
+import cn.ml_tech.mx.mlservice.Util.OperateUtil;
 import cn.ml_tech.mx.mlservice.Util.WifiConnectUtil;
+import cn.ml_tech.mx.mlservice.base.MlServerApplication;
 import cn.ml_tech.mx.mlservice.base.SocketModule;
+import dao.MobileUser;
 
 /**
  * Created by zhongwang on 2018/1/22.
@@ -16,7 +20,11 @@ import cn.ml_tech.mx.mlservice.base.SocketModule;
 
 public class MobileConnectService extends Service {
     private WifiConnectUtil wifiConnectUtil;
-     @Nullable
+    private MlServerApplication mlServerApplication;
+    private OperateUtil operateUtil;
+    private Gson gson;
+
+    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -25,15 +33,24 @@ public class MobileConnectService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        LogUtil.out(LogUtil.Debug,"mobile service oncreate");
-        wifiConnectUtil = WifiConnectUtil.getWifiConnectUtil(this);
+        init();
         wifiConnectUtil.startObserver(new WifiConnectUtil.Operate() {
             @Override
-            public SocketModule login(SocketModule socketModule) {
-                MobileUser mobileUser = (MobileUser) socketModule.getBaseModule();
-                LogUtil.out(LogUtil.Debug,mobileUser.getUserName()+"  "+mobileUser.getUserPassword());
-                return null;
+            public Object login(SocketModule socketModule) {
+                MobileUser mobileUser = gson.fromJson(socketModule.getBaseModule(), MobileUser.class);
+                LogUtil.out(LogUtil.Debug, mobileUser.getUserName());
+            return operateUtil.checkAuthority(mobileUser.getUserName(), mobileUser.getUserPassword());
+
             }
         });
     }
+
+    private void init() {
+        LogUtil.out(LogUtil.Debug, "mobile service oncreate");
+        wifiConnectUtil = WifiConnectUtil.getWifiConnectUtil(this);
+        operateUtil = OperateUtil.getInstance();
+        mlServerApplication = (MlServerApplication) getApplication();
+        gson = mlServerApplication.getGson();
+    }
+
 }

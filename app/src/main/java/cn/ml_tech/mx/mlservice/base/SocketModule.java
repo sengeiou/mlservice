@@ -6,21 +6,19 @@ package cn.ml_tech.mx.mlservice.base;
 
 public class SocketModule {
     private String operateType;
-    private Object baseModule;
-
+    private String baseModule;
     public String getOperateType() {
         return operateType;
     }
-
     public void setOperateType(String operateType) {
         this.operateType = operateType;
     }
 
-    public Object getBaseModule() {
+    public String getBaseModule() {
         return baseModule;
     }
 
-    public void setBaseModule(Object baseModule) {
+    public void setBaseModule(String baseModule) {
         this.baseModule = baseModule;
     }
 }
