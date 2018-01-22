@@ -4,7 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,56 +19,44 @@ import java.util.concurrent.Executors;
 public class WifiConnectUtil {
     private static WifiConnectUtil wifiConnectUtil;
     private String ipAddress = "";
-    private boolean isEnable;
-    private  WebConfig webConfig;//配置信息类
-    private  ExecutorService threadPool;//线程池
+    private ExecutorService threadPool;//线程池
     private ServerSocket serverSocket;
     private ToastUtil toastUtil;
     private Context context;
-    private WifiConnectUtil(Context context) {
+    private PrintWriter printWriter;
+
+    public WifiConnectUtil(Context context) {
         this.context = context;
-        toastUtil =ToastUtil.getInstance(context);
+        toastUtil = ToastUtil.getInstance(context);
         ipAddress = "192.168.3.135";
         threadPool = Executors.newCachedThreadPool();
         threadPool.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    serverSocket = new ServerSocket(3456);
-                    serverSocket.accept();
-                    LogUtil.out(LogUtil.Debug,"链接成功");
+                    serverSocket = new ServerSocket(8888);
+                    while (true) {
+                        LogUtil.out(LogUtil.Debug, "等待连接");
+                        Socket server = serverSocket.accept();
+                        printWriter = new PrintWriter(server.getOutputStream());
+                        LogUtil.out(LogUtil.Debug, "链接成功");
+                        printWriter.println("connect sucess");
+                        printWriter.flush();
+
+                    }
+
                 } catch (IOException e) {
                     e.printStackTrace();
-                    toastUtil.showToast("无线服务开启失败");
+                    LogUtil.out(LogUtil.Debug, "io异常");
                 }
             }
         });
 
     }
+
     public static WifiConnectUtil getWifiConnectUtil(Context context) {
+        if (wifiConnectUtil == null)
             wifiConnectUtil = new WifiConnectUtil(context);
         return wifiConnectUtil;
-    }
-
-    public class WebConfig {
-
-        private int port;//端口
-        private int maxParallels;//最大监听数
-
-        public int getPort() {
-            return port;
-        }
-
-        public void setPort(int port) {
-            this.port = port;
-        }
-
-        public int getMaxParallels() {
-            return maxParallels;
-        }
-
-        public void setMaxParallels(int maxParallels) {
-            this.maxParallels = maxParallels;
-        }
     }
 }
