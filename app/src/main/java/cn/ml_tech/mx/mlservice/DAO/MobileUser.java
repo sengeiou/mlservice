@@ -1,4 +1,4 @@
-package dao;
+package cn.ml_tech.mx.mlservice.DAO;
 
 /**
  * Created by zhongwang on 2018/1/22.

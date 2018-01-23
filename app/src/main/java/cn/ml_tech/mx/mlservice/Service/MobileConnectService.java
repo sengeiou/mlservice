@@ -11,8 +11,9 @@ import cn.ml_tech.mx.mlservice.Util.LogUtil;
 import cn.ml_tech.mx.mlservice.Util.OperateUtil;
 import cn.ml_tech.mx.mlservice.Util.WifiConnectUtil;
 import cn.ml_tech.mx.mlservice.base.MlServerApplication;
+import cn.ml_tech.mx.mlservice.base.SocketInfo;
 import cn.ml_tech.mx.mlservice.base.SocketModule;
-import dao.MobileUser;
+import cn.ml_tech.mx.mlservice.DAO.MobileUser;
 
 /**
  * Created by zhongwang on 2018/1/22.
@@ -36,10 +37,10 @@ public class MobileConnectService extends Service {
         init();
         wifiConnectUtil.startObserver(new WifiConnectUtil.Operate() {
             @Override
-            public Object login(SocketModule socketModule) {
-                MobileUser mobileUser = gson.fromJson(socketModule.getBaseModule(), MobileUser.class);
-                LogUtil.out(LogUtil.Debug, mobileUser.getUserName());
-            return operateUtil.checkAuthority(mobileUser.getUserName(), mobileUser.getUserPassword());
+            public SocketInfo login(SocketInfo socketInfo) {
+                MobileUser mobileUser = gson.fromJson(socketInfo.getBaseModule(), MobileUser.class);
+                socketInfo.setBaseModule(operateUtil.checkAuthority(mobileUser.getUserName(), mobileUser.getUserPassword())+"");
+            return socketInfo;
 
             }
         });
